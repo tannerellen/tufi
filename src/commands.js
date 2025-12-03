@@ -167,7 +167,6 @@ export async function connectToWifi(ssid, password, hidden = false) {
     cmd.push("hidden");
     cmd.push("yes");
   }
-  cmd.push("--ask");
   try {
     return await runCommand(cmd);
   } catch (err) {
@@ -177,9 +176,19 @@ export async function connectToWifi(ssid, password, hidden = false) {
   }
 }
 
-async function deleteConnection(ssid) {
+export async function deleteNetworkConnection(ssid) {
   try {
     await runCommand(["nmcli", "connection", "delete", ssid]);
+    return;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function disconnectFromNetwork(ssid) {
+  try {
+    const wifiInterface = await getWifiInterface();
+    await runCommand(["nmcli", "device", "disconnect", wifiInterface]);
     return;
   } catch (err) {
     return; // Don't throw on error because it may not delete if connection doesn't exist

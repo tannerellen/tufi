@@ -1,4 +1,8 @@
-import { getWifiList, getKnownNetworks } from "../commands";
+import {
+  getWifiList,
+  getKnownNetworks,
+  deleteNetworkConnection,
+} from "../commands";
 
 let rawLists;
 
@@ -22,6 +26,14 @@ export function generateNetworkLists() {
 export function getNetworkLists() {
   const [allNetworks, knownNetworks] = rawLists;
   return buildNetworkLists(allNetworks, knownNetworks);
+}
+
+export async function deleteNetwork(ssid) {
+  try {
+    await deleteNetworkConnection(ssid);
+  } catch (err) {
+    throw err;
+  }
 }
 
 function buildNetworkLists(allNetworks, knownNetworks) {

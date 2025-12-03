@@ -3,11 +3,10 @@ import { containerBox } from "./ui/layout";
 import { listUi, listUpdate } from "./ui/listTable";
 import { getDeviceList } from "./modules/device";
 import { getStationList } from "./modules/station";
-import { generateNetworkLists } from "./modules/network";
+import { generateNetworkLists, deleteNetwork } from "./modules/network";
 import { connectWifi } from "./modules/wifi-dialog";
 import {
   registerNavigation,
-  getRowPosition,
   saveRowPositions,
   restoreRowPositions,
 } from "./navigation";
@@ -86,9 +85,17 @@ export async function initialize() {
 
   // populate ui with data
   reloadUiData();
+  renderedNetworksUi.focus();
 
   // Register navigation keys
   registerNavigation([renderedNetworksUi, renderedKnownNetworksUi]);
+
+  // App level keys. Todo: Should these just be assigned to our network list elements?
+  screen.key(["s"], function (ch, key) {
+    reloadUiData();
+  });
+
+  registerKnownNetworkActions(renderedKnownNetworksUi);
 
   function reloadUiData() {
     saveRowPositions([renderedNetworksUi, renderedKnownNetworksUi]);
@@ -118,18 +125,30 @@ export async function initialize() {
           "Signal",
           "Connected",
         ]);
-        const allNetworkRow = getRowPosition(renderedNetworksUi);
         listUpdate(renderedNetworksUi, networkLists.allNetworks, [
           "Name",
           "Security",
           "Signal",
         ]);
-        renderedNetworksUi.focus();
         restoreRowPositions();
         screen.render();
       })
       .catch((err) => {
         console.log("err", err);
       });
+  }
+
+  function registerKnownNetworkActions(element) {
+    element.key(["d"], async function (ch, key) {
+      const index = element.selected;
+      const rowData = element.rows[index];
+      const ssid = rowData[0]; // First column is SSID
+      try {
+        await deleteNetwork(ssid);
+        reloadUiData();
+      } catch (err) {
+        reloadUiData();
+      }
+    });
   }
 }

@@ -6,6 +6,10 @@ export function saveRowPositions(focusableElements) {
   focusableElements.forEach((element, index) => {
     // Set default current row for list type items
     if (element.type === "list-table") {
+      const rows = element.rows;
+      if (!rows.length) {
+        return;
+      }
       const rowData = element.rows[element.selected];
       const id = rowData[0]; // assuming first column is unique identifier
       rowStates.set(element, { index: element.selected, id: id }); // Starting at 1 because of header row
@@ -20,6 +24,9 @@ export function restoreRowPositions() {
     }
 
     const rows = key.rows;
+    if (!rows.length) {
+      return;
+    }
     for (let i = 0; i < rows.length; i++) {
       if (rows[i][0] === value.id) {
         // Id is matched by name so navigate to that row
@@ -28,11 +35,11 @@ export function restoreRowPositions() {
       }
     }
     // If no matching id is found keep it in the same position
-    key.select(value.index);
+    key.select(rows.length > value.index ? value.index : 1);
   }
 }
 
-export function getRowPosition(element) {
+export function getRowState(element) {
   return rowStates.get(element);
 }
 
