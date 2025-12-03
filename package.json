@@ -1,0 +1,15 @@
+{
+  "name": "Tufi",
+  "version": "0.0.1",
+  "description": "Wifi Tui for Network Manager",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tanner Ellen",
+  "license": "MIT",
+  "dependencies": {
+    "blessed": "^0.1.81"
+  }
+}
