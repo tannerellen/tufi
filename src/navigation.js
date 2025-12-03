@@ -43,11 +43,11 @@ export function registerNavigation(focusableElements, onEnter, onEscape) {
   // Add key handlers to each focusable element
   focusableElements.forEach((element, index) => {
     // Handle tab and arrow keys on each element
-    element.key(["tab", "down"], (ch, key) => {
+    element.key(["tab"], (ch, key) => {
       focusNext();
     });
 
-    element.key(["S-tab", "up"], (ch, key) => {
+    element.key(["S-tab"], (ch, key) => {
       focusPrev();
     });
 
