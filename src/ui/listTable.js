@@ -16,7 +16,6 @@ export function listUi(container, options) {
     vi: true,
     mouse: true,
     noCellBorders: true,
-    scrollbar: "auto",
     border: {
       type: "none",
     },
