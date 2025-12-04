@@ -3,13 +3,14 @@ import { containerBox } from "./ui/layout";
 import { listUi, listUpdate } from "./ui/listTable";
 import { getDeviceList } from "./modules/device";
 import { getStationList } from "./modules/station";
-import { generateNetworkLists, deleteNetwork } from "./modules/network";
+import { scanNetworks, deleteNetwork } from "./modules/network";
 import { connectWifi } from "./modules/wifi-dialog";
 import {
   registerNavigation,
   saveRowPositions,
   restoreRowPositions,
 } from "./navigation";
+import { messageUi } from "./ui/message";
 
 export async function initialize() {
   let networks = {};
@@ -91,20 +92,32 @@ export async function initialize() {
   registerNavigation([renderedNetworksUi, renderedKnownNetworksUi]);
 
   // App level keys. Todo: Should these just be assigned to our network list elements?
-  screen.key(["s"], function (ch, key) {
-    reloadUiData();
+  screen.key(["s"], async function (ch, key) {
+    const connectingMessage = messageUi(screen, {
+      top: screen.height - 1,
+      left: 0,
+      right: 0,
+      height: "shrink",
+      content: "Scanning...",
+    });
+    await reloadUiData();
+    setTimeout(() => {
+      // Run in timeout so we always see the message for a little bit at least
+      connectingMessage.destroy();
+      screen.render();
+    }, 500);
   });
 
   registerKnownNetworkActions(renderedKnownNetworksUi);
 
-  function reloadUiData() {
+  async function reloadUiData() {
     saveRowPositions([renderedNetworksUi, renderedKnownNetworksUi]);
     getDeviceList().then((deviceList) => {
       listUpdate(renderedDeviceUi, deviceList, ["Name", "Powered", "Address"]);
       screen.render();
     });
 
-    // station
+    // Get station info
     getStationList().then((stationList) => {
       listUpdate(renderedStationUi, stationList, [
         "State",
@@ -115,27 +128,8 @@ export async function initialize() {
       screen.render();
     });
 
-    // network
-    generateNetworkLists()
-      .then((networkLists) => {
-        networks = networkLists;
-        listUpdate(renderedKnownNetworksUi, networkLists.knownNetworks, [
-          "Name",
-          "Security",
-          "Signal",
-          "Connected",
-        ]);
-        listUpdate(renderedNetworksUi, networkLists.allNetworks, [
-          "Name",
-          "Security",
-          "Signal",
-        ]);
-        restoreRowPositions();
-        screen.render();
-      })
-      .catch((err) => {
-        console.log("err", err);
-      });
+    // Scan for networks
+    networks = await scanNetworks(renderedKnownNetworksUi, renderedNetworksUi);
   }
 
   function registerKnownNetworkActions(element) {

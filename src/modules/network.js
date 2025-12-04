@@ -1,12 +1,42 @@
+import { getScreen } from "../screen";
 import {
   getWifiList,
   getKnownNetworks,
   deleteNetworkConnection,
 } from "../commands";
 
+import { listUpdate } from "../ui/listTable";
+import { restoreRowPositions } from "../navigation";
+
 let rawLists;
 
-export function generateNetworkLists() {
+export function scanNetworks(renderedKnownNetworksUi, renderedNetworksUi) {
+  return new Promise((resolve, reject) => {
+    const screen = getScreen();
+    generateNetworkLists()
+      .then((networkLists) => {
+        listUpdate(renderedKnownNetworksUi, networkLists.knownNetworks, [
+          "Name",
+          "Security",
+          "Signal",
+          "Connected",
+        ]);
+        listUpdate(renderedNetworksUi, networkLists.allNetworks, [
+          "Name",
+          "Security",
+          "Signal",
+        ]);
+        restoreRowPositions();
+        screen.render();
+        resolve(networkLists);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+}
+
+function generateNetworkLists() {
   return new Promise((resolve, reject) => {
     const promises = [getWifiList(), getKnownNetworks()];
 

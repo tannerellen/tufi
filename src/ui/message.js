@@ -17,6 +17,7 @@ export function messageUi(container, options) {
     left: options?.left ?? "",
     right: options?.right ?? "",
     height: options?.height ?? "",
+    shrink: true,
     style: {
       bg: color,
       fg: "",
