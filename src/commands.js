@@ -171,7 +171,7 @@ export async function connectToWifi(ssid, password, hidden = false) {
     return await runCommand(cmd);
   } catch (err) {
     // If connection fails then remove connection
-    await deleteConnection(ssid);
+    await deleteNetworkConnection(ssid);
     throw err;
   }
 }
