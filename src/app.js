@@ -3,7 +3,8 @@ import { containerBox } from "./ui/layout";
 import { listUi, listUpdate } from "./ui/listTable";
 import { getDeviceList } from "./modules/device";
 import { getStationList } from "./modules/station";
-import { scanNetworks, deleteNetwork, toggleWifi } from "./modules/network";
+import { scanNetworks, deleteNetwork } from "./modules/network";
+import { toggleWifi } from "./modules/device";
 import { connectWifi } from "./modules/wifi-dialog";
 import {
   registerNavigation,
