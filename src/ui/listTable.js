@@ -2,6 +2,7 @@ import blessed from "blessed";
 import { getScreen } from "../screen";
 
 export function listUi(container, options) {
+  const screen = getScreen();
   // Create ListTable
   const list = blessed.listtable({
     parent: container,
@@ -27,7 +28,7 @@ export function listUi(container, options) {
       cell: {
         fg: "white",
         selected: {
-          bg: options?.readOnly ? "" : "yellow",
+          bg: options?.readOnly ? "" : "gray",
           // fg: "white",
         },
       },
@@ -46,15 +47,16 @@ export function listUi(container, options) {
 
   // Handle focus events
   list.on("focus", () => {
-    const screen = getScreen();
+    list.style.cell.selected.bg = options?.readOnly ? "" : "yellow";
     container.style.border.fg = "green"; // Change border color when focused
     container.children.find((child) => {
       return child.name === "title";
     }).style.fg = "green";
+    screen.render();
   });
 
   list.on("blur", () => {
-    const screen = getScreen();
+    list.style.cell.selected.bg = options?.readOnly ? "" : "gray";
     container.style.border.fg = ""; // Reset border color when blurred
     container.children.find((child) => {
       return child.name === "title";
