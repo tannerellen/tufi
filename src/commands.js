@@ -19,6 +19,15 @@ export async function getWifiInterface() {
   }
 }
 
+export async function wifiPower(state) {
+  try {
+    await runCommand(["nmcli", "radio", "wifi", state]);
+    return;
+  } catch (err) {
+    throw err;
+  }
+}
+
 /** @type {(iface: string) => Promise<{[key: string], string}>} */
 export async function getDeviceDetail(iface) {
   try {
@@ -160,6 +169,7 @@ async function getCurrentConnection() {
 export async function connectToWifi(ssid, password, hidden = false) {
   const cmd = ["nmcli", "device", "wifi", "connect", ssid];
   if (password) {
+    console.log("pass");
     cmd.push("password");
     cmd.push(password);
   }
@@ -192,6 +202,15 @@ export async function disconnectFromNetwork(ssid) {
     return;
   } catch (err) {
     return; // Don't throw on error because it may not delete if connection doesn't exist
+  }
+}
+
+export async function isWifiEnabled() {
+  try {
+    const enabled = await runCommand(["nmcli", "radio", "wifi"]);
+    return enabled === "enabled";
+  } catch (err) {
+    throw err;
   }
 }
 

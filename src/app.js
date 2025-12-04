@@ -3,7 +3,7 @@ import { containerBox } from "./ui/layout";
 import { listUi, listUpdate } from "./ui/listTable";
 import { getDeviceList } from "./modules/device";
 import { getStationList } from "./modules/station";
-import { scanNetworks, deleteNetwork } from "./modules/network";
+import { scanNetworks, deleteNetwork, toggleWifi } from "./modules/network";
 import { connectWifi } from "./modules/wifi-dialog";
 import {
   registerNavigation,
@@ -92,6 +92,11 @@ export async function initialize() {
   registerNavigation([renderedNetworksUi, renderedKnownNetworksUi]);
 
   // App level keys. Todo: Should these just be assigned to our network list elements?
+  screen.key(["o"], async function (ch, key) {
+    await toggleWifi();
+    reloadUiData();
+  });
+
   screen.key(["s"], async function (ch, key) {
     const connectingMessage = messageUi(screen, {
       top: screen.height - 1,

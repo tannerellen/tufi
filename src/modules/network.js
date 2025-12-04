@@ -1,5 +1,7 @@
 import { getScreen } from "../screen";
 import {
+  isWifiEnabled,
+  wifiPower,
   getWifiList,
   getKnownNetworks,
   deleteNetworkConnection,
@@ -7,6 +9,8 @@ import {
 
 import { listUpdate } from "../ui/listTable";
 import { restoreRowPositions } from "../navigation";
+import { messageUi } from "../ui/message";
+import { asyncTimeout } from "../utils/utils";
 
 let rawLists;
 
@@ -61,6 +65,28 @@ export function getNetworkLists() {
 export async function deleteNetwork(ssid) {
   try {
     await deleteNetworkConnection(ssid);
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function toggleWifi() {
+  const screen = getScreen();
+  try {
+    const isEnabled = await isWifiEnabled();
+    const newState = isEnabled ? "off" : "on";
+    const message = messageUi(screen, {
+      top: screen.height - 1,
+      left: 0,
+      right: 0,
+      height: "shrink",
+      content: `Turning ${newState} wifi...`,
+    });
+    await wifiPower(newState);
+    await asyncTimeout(isEnabled ? 500 : 3500);
+    message.destroy();
+
+    return;
   } catch (err) {
     throw err;
   }
