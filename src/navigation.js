@@ -1,3 +1,4 @@
+import { form } from "../external-dependencies/reblessed/src/lib/widget";
 import { getScreen } from "./screen";
 
 let rowStates = new Map();
@@ -41,6 +42,15 @@ export function restoreRowPositions() {
 
 export function getRowState(element) {
   return rowStates.get(element);
+}
+
+export function focusFormInput(formElement, inputElement) {
+  if (inputElement.focused) {
+    return;
+  } else {
+    formElement.focusNext();
+    focusFormInput(formElement, inputElement);
+  }
 }
 
 export function registerNavigation(

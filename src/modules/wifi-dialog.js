@@ -4,7 +4,7 @@ import { formUi } from "../ui/form.js";
 import { inputUi } from "../ui/input.js";
 import { buttonUi } from "../ui/button.js";
 import { messageUi } from "../ui/message.js";
-import { registerNavigation } from "../navigation.js";
+import { registerNavigation, focusFormInput } from "../navigation.js";
 
 export function connectWifi(container, ssid, onDestroy) {
   const screen = getScreen();
@@ -90,7 +90,7 @@ export function connectWifi(container, ssid, onDestroy) {
         height: "shrink",
         content: err.message,
       });
-      passwordInput.focus();
+      focusFormInput(form, passwordInput);
       screen.render();
     }
   });
