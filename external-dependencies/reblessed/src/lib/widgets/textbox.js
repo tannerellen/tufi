@@ -28,6 +28,7 @@ function Textbox(options) {
 
   this.secret = options.secret;
   this.censor = options.censor;
+  this.censorChar = options.censorChar || "*";
 }
 
 Textbox.prototype.__proto__ = Textarea.prototype;
@@ -55,7 +56,7 @@ Textbox.prototype.setValue = function(value) {
     if (this.secret) {
       this.setContent('');
     } else if (this.censor) {
-      this.setContent(Array(this.value.length + 1).join('*'));
+      this.setContent(Array(this.value.length + 1).join(this.censorChar));
     } else {
       visible = -(this.width - this.iwidth - 1);
       val = this.value.replace(/\t/g, this.screen.tabc);

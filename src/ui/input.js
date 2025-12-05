@@ -23,6 +23,7 @@ export function inputUi(container, options) {
     height: 3,
     inputOnFocus: true,
     censor: !!options?.censor, // This hides the password input
+    censorChar: "•",
     border: {
       type: "line",
     },
