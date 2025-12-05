@@ -35,7 +35,14 @@ export async function getDeviceDetail(iface) {
       "cat",
       `/sys/class/net/${iface}/address`,
     ]);
-    return [{ iface: iface, stationStatus: "On", macAddress: macAddress }];
+    const enabled = await isWifiEnabled();
+    return [
+      {
+        iface: iface,
+        stationStatus: enabled ? "On" : "Off",
+        macAddress: macAddress,
+      },
+    ];
   } catch (err) {
     throw err;
   }
