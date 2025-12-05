@@ -42,11 +42,12 @@ export function connectWifi(container, ssid, onDestroy) {
   });
 
   // Focus the input
-  passwordInput.focus();
+  form.focusNext();
 
   // Store focusable elements in order
   const focusableElements = [passwordInput, connectButton, cancelButton];
   registerNavigation(
+    form,
     focusableElements,
     (element) => {
       if (element === cancelButton) {
@@ -94,15 +95,10 @@ export function connectWifi(container, ssid, onDestroy) {
     }
   });
 
-  // Connect button click handler
-  connectButton.on("press", () => {
-    form.submit();
-  });
-
   // Handle cancel button
   cancelButton.on("press", () => {
     // Clear form
-    // passwordInput.setValue("");
+    passwordInput.setValue("");
     destroy();
   });
 

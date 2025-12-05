@@ -43,20 +43,27 @@ export function getRowState(element) {
   return rowStates.get(element);
 }
 
-export function registerNavigation(focusableElements, onEnter, onEscape) {
+export function registerNavigation(
+  container,
+  focusableElements,
+  onEnter,
+  onEscape,
+) {
   const screen = getScreen();
   let currentFocusIndex = 0;
 
   // Add key handlers to each focusable element
   focusableElements.forEach((element, index) => {
     // Handle tab and arrow keys on each element
-    element.key(["tab"], (ch, key) => {
-      focusNext();
-    });
+    if (container.type !== "form") {
+      element.key(["tab"], (ch, key) => {
+        focusNext();
+      });
 
-    element.key(["S-tab"], (ch, key) => {
-      focusPrev();
-    });
+      element.key(["S-tab"], (ch, key) => {
+        focusPrev();
+      });
+    }
 
     element.key(["escape"], (ch, key) => {
       if (onEscape) {

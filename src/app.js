@@ -90,7 +90,7 @@ export async function initialize() {
   renderedNetworksUi.focus();
 
   // Register navigation keys
-  registerNavigation([renderedNetworksUi, renderedKnownNetworksUi]);
+  registerNavigation(screen, [renderedNetworksUi, renderedKnownNetworksUi]);
 
   // App level keys. Todo: Should these just be assigned to our network list elements?
   screen.key(["o"], async function (ch, key) {
