@@ -1,4 +1,4 @@
-import blessed from "blessed";
+import blessed from "../../external-dependencies/reblessed";
 
 export function buttonUi(container, options) {
   const color = options?.color ?? "green";

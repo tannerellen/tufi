@@ -1,4 +1,4 @@
-import blessed from "blessed";
+import blessed from "../external-dependencies/reblessed";
 
 let currentScreen;
 

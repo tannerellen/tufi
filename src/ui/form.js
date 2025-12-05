@@ -1,4 +1,4 @@
-import blessed from "blessed";
+import blessed from "../../external-dependencies/reblessed";
 
 export function formUi(container, options) {
   const form = blessed.form({
