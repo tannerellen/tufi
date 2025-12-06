@@ -1,4 +1,3 @@
-import { form } from "../external-dependencies/reblessed/src/lib/widget";
 import { getScreen } from "./screen";
 
 let rowStates = new Map();
