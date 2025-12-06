@@ -12,11 +12,6 @@ export function containerBox(options) {
     },
     style: {
       fg: "white",
-      // bg: "#282828",
-      // bg: "#323836",
-      border: {
-        // fg: "white",
-      },
       focus: {
         border: {
           fg: "green",
@@ -36,10 +31,6 @@ export function containerBox(options) {
     padding: {
       left: 1,
       right: 1,
-    },
-    style: {
-      //   bg: "blue",
-      fg: "",
     },
   });
   box.on("click", () => {
