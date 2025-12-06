@@ -5,4 +5,4 @@ This is a fork of blessed and intern has been forked again to make it compatible
 You can find the source of the library in this modified state here:
 https://github.com/tannerellen/reblessed/tree/executable-safe
 
-Copy the src folder from the "executable-safe" branch.
+Copy the src and usr folders from the "executable-safe" branch.
