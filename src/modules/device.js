@@ -25,13 +25,14 @@ export async function toggleWifi() {
       left: 0,
       right: 0,
       height: "shrink",
-      content: `Turning ${newState} wifi...`,
+      content: `Turning wifi ${newState}...`,
     });
+    screen.render();
     await wifiPower(newState);
-    await asyncTimeout(isEnabled ? 500 : 3500);
+    await asyncTimeout(500);
     message.destroy();
-
-    return;
+    screen.render();
+    return !isEnabled;
   } catch (err) {
     throw err;
   }

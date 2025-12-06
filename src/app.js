@@ -100,8 +100,21 @@ export async function initialize() {
 
   // App level keys. Todo: Should these just be assigned to our network list elements?
   screen.key(["o"], async function (ch, key) {
-    await toggleWifi();
-    reloadUiData();
+    try {
+      const isEnabled = await toggleWifi();
+      await reloadUiData(); // Quickly update the ui regardless if we have networks
+      if (isEnabled) {
+        for (let i = 0; i < 10; i++) {
+          const networks = await scan(500);
+          if (networks.allNetworks.length) {
+            break;
+          }
+        }
+      }
+      return;
+    } catch (err) {
+      // Show Error?
+    }
   });
 
   screen.key(["s"], async function (ch, key) {
