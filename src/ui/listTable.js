@@ -39,6 +39,14 @@ export function listUi(container, options) {
     data: [["Loading..."]],
   });
 
+  list.key(["space"], async function (ch, key) {
+    const index = list.selected;
+    const item = list.items[index];
+    list.select(index);
+    screen.render();
+    list.emit("select", item, index);
+  });
+
   list.on("select", (item, index) => {
     if (options?.onSelect) {
       options.onSelect(item, index);
