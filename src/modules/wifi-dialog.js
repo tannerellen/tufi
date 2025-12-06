@@ -1,5 +1,5 @@
 import { getScreen } from "../screen.js";
-import { connectToWifi } from "../commands.js";
+import { connectToNetwork } from "../commands.js";
 import { formUi } from "../ui/form.js";
 import { inputUi } from "../ui/input.js";
 import { buttonUi } from "../ui/button.js";
@@ -77,7 +77,7 @@ export function connectWifi(container, ssid, onDestroy) {
     });
     screen.render();
     try {
-      const connection = await connectToWifi(ssid, data.password);
+      const connection = await connectToNetwork(ssid, data.password);
       destroy();
     } catch (err) {
       connectingMessage.destroy();

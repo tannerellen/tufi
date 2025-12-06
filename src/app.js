@@ -8,8 +8,9 @@ import {
   registerNetworkUi,
   scanNetworks,
   deleteNetwork,
+  toggleWifiConnection,
 } from "./modules/network";
-import { toggleWifi } from "./modules/device";
+import { togglePower } from "./modules/device";
 import { connectWifi } from "./modules/wifi-dialog";
 import {
   registerNavigation,
@@ -55,6 +56,13 @@ export async function initialize() {
   screen.append(knownNetworksContainer);
   const renderedKnownNetworksUi = listUi(knownNetworksContainer, {
     name: "focus-known-networks",
+    onSelect: async (item, index) => {
+      const rowData = renderedKnownNetworksUi.rows[index];
+      const ssid = rowData[0]; // First column is SSID
+      const connected = !!rowData[3];
+      await toggleWifiConnection(ssid, connected);
+      await reloadUiData();
+    },
   });
 
   // all networks
@@ -101,7 +109,7 @@ export async function initialize() {
   // App level keys. Todo: Should these just be assigned to our network list elements?
   screen.key(["o"], async function (ch, key) {
     try {
-      const isEnabled = await toggleWifi();
+      const isEnabled = await togglePower();
       await reloadUiData(); // Quickly update the ui regardless if we have networks
       if (isEnabled) {
         for (let i = 0; i < 30; i++) {

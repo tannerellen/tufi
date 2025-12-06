@@ -15,7 +15,7 @@ export async function getDeviceList() {
   return deviceDetail;
 }
 
-export async function toggleWifi() {
+export async function togglePower() {
   const screen = getScreen();
   try {
     const isEnabled = await isWifiEnabled();

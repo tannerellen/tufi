@@ -173,7 +173,7 @@ async function getCurrentConnection() {
 }
 
 // connect functions
-export async function connectToWifi(ssid, password, hidden = false) {
+export async function connectToNetwork(ssid, password, hidden = false) {
   const cmd = ["nmcli", "device", "wifi", "connect", ssid];
   if (password) {
     cmd.push("password");

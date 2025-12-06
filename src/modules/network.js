@@ -3,10 +3,13 @@ import {
   getWifiList,
   getKnownNetworks,
   deleteNetworkConnection,
+  connectToNetwork,
+  disconnectFromNetwork,
 } from "../commands";
 
 import { listUpdate } from "../ui/listTable";
 import { restoreRowPositions } from "../navigation";
+import { messageUi } from "../ui/message";
 
 let rawLists;
 let knownNetworksUi;
@@ -62,6 +65,28 @@ function generateNetworkLists() {
         reject(err);
       });
   });
+}
+
+export async function toggleWifiConnection(ssid, connected) {
+  const screen = getScreen();
+  const messageContent = connected
+    ? `Disconnecting from ${ssid}...`
+    : `Connecting to ${ssid}...`;
+  const message = messageUi(screen, {
+    top: screen.height - 1,
+    left: 0,
+    right: 0,
+    height: "shrink",
+    content: messageContent,
+  });
+  screen.render();
+  if (connected) {
+    await disconnectFromNetwork(ssid);
+  } else {
+    await connectToNetwork(ssid);
+  }
+  message.destroy();
+  screen.render();
 }
 
 export function getNetworkLists() {
