@@ -98,6 +98,7 @@ export async function deleteNetwork(ssid) {
   try {
     await deleteNetworkConnection(ssid);
     removeFromKnownNetworks(ssid);
+    await asyncTimeout(100); // Small delay to give state a chance to update
     const [allNetworks, knownNetworks] = rawLists;
     const networkLists = buildNetworkLists(allNetworks, knownNetworks);
     updateNetworkLists(networkLists);
