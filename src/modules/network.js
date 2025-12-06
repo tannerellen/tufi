@@ -83,9 +83,10 @@ export async function deleteNetwork(ssid) {
 }
 
 function removeFromKnownNetworks(ssid) {
-  for (let i = 0; i < rawLists.knownNetworks.length; i++) {
-    if (rawLists.knownNetworks[i].ssid === ssid) {
-      rawLists.knownNetworks.splice(i, 1);
+  const knownNetworks = rawLists[1];
+  for (let i = 0; i < knownNetworks.length; i++) {
+    if (knownNetworks[i].ssid === ssid) {
+      knownNetworks.splice(i, 1);
       return;
     }
   }
@@ -129,7 +130,7 @@ function deDuplicateNetworks(networks) {
     if (!network.ssid || (networkMap.has(network.ssid) && !network.connected)) {
       continue;
     }
-    networkMap.set(network.ssid, network);
+    networkMap.set(network.ssid, { ...network });
   }
   return [...networkMap.values()];
 }

@@ -1,4 +1,5 @@
 import { createScreen } from "./screen";
+import { asyncTimeout } from "./utils/utils";
 import { containerBox } from "./ui/layout";
 import { listUi, listUpdate } from "./ui/listTable";
 import { getDeviceList } from "./modules/device";
@@ -18,7 +19,6 @@ import {
 import { messageUi } from "./ui/message";
 
 export async function initialize() {
-  let networks = {};
   // create UI
   // create main screen object
   const screen = createScreen();
@@ -105,23 +105,12 @@ export async function initialize() {
   });
 
   screen.key(["s"], async function (ch, key) {
-    const connectingMessage = messageUi(screen, {
-      top: screen.height - 1,
-      left: 0,
-      right: 0,
-      height: "shrink",
-      content: "Scanning...",
-    });
-    await reloadUiData();
-    setTimeout(() => {
-      // Run in timeout so we always see the message for a little bit at least
-      connectingMessage.destroy();
-      screen.render();
-    }, 500);
+    await scan(500);
   });
 
   registerKnownNetworkActions(renderedKnownNetworksUi);
 
+  // Private functions
   async function reloadUiData() {
     saveRowPositions([renderedNetworksUi, renderedKnownNetworksUi]);
     getDeviceList().then((deviceList) => {
@@ -141,7 +130,12 @@ export async function initialize() {
     });
 
     // Scan for networks
-    networks = await scanNetworks();
+    try {
+      const networks = await scanNetworks();
+      return networks;
+    } catch (err) {
+      return {};
+    }
   }
 
   function registerKnownNetworkActions(element) {
@@ -150,14 +144,40 @@ export async function initialize() {
       const rowData = element.rows[index];
       const ssid = rowData[0]; // First column is SSID
       try {
+        let networks;
         await deleteNetwork(ssid);
-        setTimeout(() => {
-          // after network has a chance to settle scan network
-          scanNetworks();
-        }, 3000);
+        for (let i = 0; i < 10; i++) {
+          networks = await scan(500); // after network has a chance to settle scan network
+          if (
+            !networks.knownNetworks.length ||
+            networks.knownNetworks.find((network) => {
+              return network.connected;
+            })
+          ) {
+            break;
+          }
+        }
       } catch (err) {
         reloadUiData();
       }
     });
+  }
+
+  async function scan(delay) {
+    const connectingMessage = messageUi(screen, {
+      top: screen.height - 1,
+      left: 0,
+      right: 0,
+      height: "shrink",
+      content: "Scanning...",
+    });
+    screen.render();
+    if (delay) {
+      await asyncTimeout(delay);
+    }
+    const networks = await reloadUiData();
+    connectingMessage.destroy();
+    screen.render();
+    return networks;
   }
 }
