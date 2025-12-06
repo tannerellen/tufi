@@ -77,7 +77,7 @@ export function connectWifi(container, ssid, onDestroy) {
     });
     screen.render();
     try {
-      const connection = await connectToWifi("zebes", data.password);
+      const connection = await connectToWifi(ssid, data.password);
       destroy();
     } catch (err) {
       connectingMessage.destroy();
