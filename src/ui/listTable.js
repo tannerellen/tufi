@@ -20,6 +20,15 @@ export function listUi(container, options) {
     border: {
       type: "none",
     },
+    scrollbar: {
+      ch: " ",
+      track: {
+        bg: "black",
+      },
+      style: {
+        bg: "white",
+      },
+    },
     style: {
       header: {
         fg: "blue",
