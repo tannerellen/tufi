@@ -104,8 +104,8 @@ export async function getWifiList() {
       return objectFromString(line, ":", [
         { name: "ssid", type: "string" },
         { name: "security", type: "string" },
-        { name: "signal", type: "string" },
-        { name: "connected", type: "string" },
+        { name: "signal", type: "number" },
+        { name: "connected", type: "boolean" },
       ]);
     });
   } catch (err) {
@@ -221,10 +221,12 @@ export async function isWifiEnabled() {
 }
 
 // util functions
-/** @type {(value: string, type: 'string' | 'number') => string | number} */
+/** @type {(value: string, type: 'string' | 'number' | 'boolean') => string | number} */
 function stringToType(value, type) {
   if (type === "number") {
     return Number(value);
+  } else if (type === "boolean") {
+    return value?.trim() && value !== "false";
   } else {
     return value;
   }

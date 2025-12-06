@@ -79,9 +79,9 @@ function buildNetworkLists(allNetworks, knownNetworks) {
   const uniqueNetworks = deDuplicateNetworks(allNetworks);
   for (const network of uniqueNetworks) {
     if (knownSet.has(network.ssid)) {
-      knownNetworksAvailable.push(network);
+      knownNetworksAvailable.push(mutateNetworkEntry(network));
     } else {
-      allNetworksUnique.push(network);
+      allNetworksUnique.push(mutateNetworkEntry(network));
     }
   }
 
@@ -89,6 +89,13 @@ function buildNetworkLists(allNetworks, knownNetworks) {
     allNetworks: allNetworksUnique,
     knownNetworks: knownNetworksAvailable,
   };
+}
+
+function mutateNetworkEntry(network) {
+  const networkClone = { ...network };
+  networkClone.connected = network.connected ? "✔" : "";
+  networkClone.signal = network.signal.toString() + "%";
+  return networkClone;
 }
 
 function deDuplicateNetworks(networks) {
