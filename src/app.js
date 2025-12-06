@@ -104,9 +104,17 @@ export async function initialize() {
       const isEnabled = await toggleWifi();
       await reloadUiData(); // Quickly update the ui regardless if we have networks
       if (isEnabled) {
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 30; i++) {
           const networks = await scan(500);
-          if (networks.allNetworks.length) {
+          if (networks.knownNetworks.length) {
+            if (
+              networks.knownNetworks.find((network) => {
+                return !!network.connected;
+              })
+            ) {
+              break;
+            }
+          } else if (networks.allNetworks.length) {
             break;
           }
         }
@@ -159,7 +167,7 @@ export async function initialize() {
       try {
         let networks;
         await deleteNetwork(ssid);
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 20; i++) {
           networks = await scan(500); // after network has a chance to settle scan network
           if (
             !networks.knownNetworks.length ||
