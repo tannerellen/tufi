@@ -9,31 +9,42 @@ import { listUpdate } from "../ui/listTable";
 import { restoreRowPositions } from "../navigation";
 
 let rawLists;
+let knownNetworksUi;
+let networksUi;
 
-export function scanNetworks(renderedKnownNetworksUi, renderedNetworksUi) {
+export function registerNetworkUi(renderedKnownNetworksUi, renderedNetworksUi) {
+  knownNetworksUi = renderedKnownNetworksUi;
+  networksUi = renderedNetworksUi;
+}
+
+export function scanNetworks() {
   return new Promise((resolve, reject) => {
-    const screen = getScreen();
     generateNetworkLists()
       .then((networkLists) => {
-        listUpdate(renderedKnownNetworksUi, networkLists.knownNetworks, [
-          "Name",
-          "Security",
-          "Signal",
-          "Connected",
-        ]);
-        listUpdate(renderedNetworksUi, networkLists.allNetworks, [
-          "Name",
-          "Security",
-          "Signal",
-        ]);
-        restoreRowPositions();
-        screen.render();
+        updateNetworkLists(networkLists);
         resolve(networkLists);
       })
       .catch((err) => {
         reject(err);
       });
   });
+}
+
+function updateNetworkLists(networkLists) {
+  const screen = getScreen();
+  listUpdate(knownNetworksUi, networkLists.knownNetworks, [
+    "Name",
+    "Security",
+    "Signal",
+    "Connected",
+  ]);
+  listUpdate(networksUi, networkLists.allNetworks, [
+    "Name",
+    "Security",
+    "Signal",
+  ]);
+  restoreRowPositions();
+  screen.render();
 }
 
 function generateNetworkLists() {
@@ -61,8 +72,22 @@ export function getNetworkLists() {
 export async function deleteNetwork(ssid) {
   try {
     await deleteNetworkConnection(ssid);
+    removeFromKnownNetworks(ssid);
+    const [allNetworks, knownNetworks] = rawLists;
+    const networkLists = buildNetworkLists(allNetworks, knownNetworks);
+    updateNetworkLists(networkLists);
+    return;
   } catch (err) {
     throw err;
+  }
+}
+
+function removeFromKnownNetworks(ssid) {
+  for (let i = 0; i < rawLists.knownNetworks.length; i++) {
+    if (rawLists.knownNetworks[i].ssid === ssid) {
+      rawLists.knownNetworks.splice(i, 1);
+      return;
+    }
   }
 }
 

@@ -3,7 +3,11 @@ import { containerBox } from "./ui/layout";
 import { listUi, listUpdate } from "./ui/listTable";
 import { getDeviceList } from "./modules/device";
 import { getStationList } from "./modules/station";
-import { scanNetworks, deleteNetwork } from "./modules/network";
+import {
+  registerNetworkUi,
+  scanNetworks,
+  deleteNetwork,
+} from "./modules/network";
 import { toggleWifi } from "./modules/device";
 import { connectWifi } from "./modules/wifi-dialog";
 import {
@@ -85,6 +89,8 @@ export async function initialize() {
   // render to make sure we see something initially
   screen.render();
 
+  // Register the rendered network ui elements so we can use them in network module
+  registerNetworkUi(renderedKnownNetworksUi, renderedNetworksUi);
   // populate ui with data
   reloadUiData();
   renderedNetworksUi.focus();
@@ -135,7 +141,7 @@ export async function initialize() {
     });
 
     // Scan for networks
-    networks = await scanNetworks(renderedKnownNetworksUi, renderedNetworksUi);
+    networks = await scanNetworks();
   }
 
   function registerKnownNetworkActions(element) {
@@ -145,7 +151,10 @@ export async function initialize() {
       const ssid = rowData[0]; // First column is SSID
       try {
         await deleteNetwork(ssid);
-        reloadUiData();
+        setTimeout(() => {
+          // after network has a chance to settle scan network
+          scanNetworks();
+        }, 3000);
       } catch (err) {
         reloadUiData();
       }
