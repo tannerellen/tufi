@@ -78,7 +78,7 @@ export function connectWifi(container, ssid, onDestroy) {
     screen.render();
     try {
       const connection = await connectToNetwork(ssid, data.password);
-      destroy();
+      destroy(true);
     } catch (err) {
       connectingMessage.destroy();
       connectButton.show();
@@ -102,13 +102,13 @@ export function connectWifi(container, ssid, onDestroy) {
     destroy();
   });
 
-  function destroy() {
+  function destroy(submitted) {
     if (errorMessage) {
       errorMessage.destroy();
     }
     form.destroy();
     if (onDestroy) {
-      onDestroy();
+      onDestroy(submitted);
     }
     screen.render();
   }

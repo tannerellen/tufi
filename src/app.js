@@ -83,10 +83,10 @@ export async function initialize() {
       screen.children.forEach((element) => {
         element.hide();
       });
-      connectWifi(screen, ssid, () => {
+      connectWifi(screen, ssid, (submitted) => {
         screen.children.forEach((element) => {
           element.show();
-          reloadUiData();
+          reloadUiData(!submitted);
           renderedNetworksUi.focus();
           screen.render();
         });
@@ -140,7 +140,7 @@ export async function initialize() {
   registerKnownNetworkActions(renderedKnownNetworksUi);
 
   // Private functions
-  async function reloadUiData() {
+  async function reloadUiData(noScan) {
     saveRowPositions([renderedNetworksUi, renderedKnownNetworksUi]);
     getDeviceList().then((deviceList) => {
       listUpdate(renderedDeviceUi, deviceList, ["Name", "Powered", "Address"]);
@@ -157,6 +157,10 @@ export async function initialize() {
       ]);
       screen.render();
     });
+
+    if (noScan) {
+      return {};
+    }
 
     // Scan for networks
     try {
