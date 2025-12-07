@@ -84,12 +84,19 @@ export function listUi(container, options) {
   return list;
 }
 
-export function listUpdate(ui, listArray, header) {
+export function listUpdate(ui, listArray, headerDictionary) {
   const listData = [];
+  const header = headerDictionary.map((headerItem) => {
+    return headerItem.label;
+  });
   listData.push(header);
 
   for (const listItem of listArray) {
-    listData.push(Object.values(listItem));
+    const values = [];
+    for (const headerItem of headerDictionary) {
+      values.push(listItem[headerItem.key]?.toString());
+    }
+    listData.push(values);
   }
 
   ui.setData(listData);

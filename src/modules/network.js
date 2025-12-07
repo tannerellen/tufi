@@ -1,6 +1,7 @@
 import { getScreen } from "../screen";
 import {
   getWifiList,
+  getConnections,
   getKnownNetworks,
   deleteNetworkConnection,
   connectToNetwork,
@@ -20,9 +21,9 @@ export function registerNetworkUi(renderedKnownNetworksUi, renderedNetworksUi) {
   networksUi = renderedNetworksUi;
 }
 
-export function scanNetworks() {
+export function scanNetworks(rescan) {
   return new Promise((resolve, reject) => {
-    generateNetworkLists()
+    generateNetworkLists(rescan)
       .then((networkLists) => {
         updateNetworkLists(networkLists);
         resolve(networkLists);
@@ -36,23 +37,23 @@ export function scanNetworks() {
 function updateNetworkLists(networkLists) {
   const screen = getScreen();
   listUpdate(knownNetworksUi, networkLists.knownNetworks, [
-    "Name",
-    "Security",
-    "Signal",
-    "Connected",
+    { label: "Name", key: "ssid" },
+    { label: "Security", key: "security" },
+    { label: "Signal", key: "signal" },
+    { label: "Connected", key: "connected" },
   ]);
   listUpdate(networksUi, networkLists.allNetworks, [
-    "Name",
-    "Security",
-    "Signal",
+    { label: "Name", key: "ssid" },
+    { label: "Security", key: "security" },
+    { label: "Signal", key: "signal" },
   ]);
   restoreRowPositions();
   screen.render();
 }
 
-function generateNetworkLists() {
+function generateNetworkLists(rescan) {
   return new Promise((resolve, reject) => {
-    const promises = [getWifiList(), getKnownNetworks()];
+    const promises = [getWifiList(rescan), getKnownNetworks()];
 
     Promise.all(promises)
       .then((result) => {

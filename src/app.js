@@ -3,7 +3,7 @@ import { asyncTimeout } from "./utils/utils";
 import { containerBox } from "./ui/layout";
 import { listUi, listUpdate } from "./ui/listTable";
 import { getDeviceList } from "./modules/device";
-import { getStationList } from "./modules/station";
+import { getActiveConnection } from "./modules/connection";
 import {
   registerNetworkUi,
   scanNetworks,
@@ -35,22 +35,22 @@ export async function initialize() {
     readOnly: true,
   });
 
-  // station
-  const stationContainer = containerBox({
-    title: "Station",
+  // connection
+  const connectionContainer = containerBox({
+    title: "Connection",
     top: deviceContainer.height,
     height: 6,
   });
-  screen.append(stationContainer);
-  const renderedStationUi = listUi(stationContainer, {
-    name: "focus-station",
+  screen.append(connectionContainer);
+  const renderedConnectionUi = listUi(connectionContainer, {
+    name: "focus-connection",
     readOnly: true,
   });
 
   // known networks
   const knownNetworksContainer = containerBox({
     title: "Known Networks",
-    top: deviceContainer.height + stationContainer.height,
+    top: deviceContainer.height + connectionContainer.height,
     height: 10,
   });
   screen.append(knownNetworksContainer);
@@ -70,7 +70,7 @@ export async function initialize() {
     title: "New Networks",
     top:
       deviceContainer.height +
-      stationContainer.height +
+      connectionContainer.height +
       knownNetworksContainer.height,
     height: "shrink",
   });
@@ -86,7 +86,7 @@ export async function initialize() {
       connectWifi(screen, ssid, (submitted) => {
         screen.children.forEach((element) => {
           element.show();
-          reloadUiData(!submitted);
+          reloadUiData(false, !submitted);
           renderedNetworksUi.focus();
           screen.render();
         });
@@ -140,20 +140,25 @@ export async function initialize() {
   registerKnownNetworkActions(renderedKnownNetworksUi);
 
   // Private functions
-  async function reloadUiData(noScan) {
+  async function reloadUiData(rescan, noScan) {
     saveRowPositions([renderedNetworksUi, renderedKnownNetworksUi]);
     getDeviceList().then((deviceList) => {
-      listUpdate(renderedDeviceUi, deviceList, ["Name", "Powered", "Address"]);
+      listUpdate(renderedDeviceUi, deviceList, [
+        { label: "Name", key: "iface" },
+        { label: "Powered", key: "stationStatus" },
+        { label: "Address", key: "macAddress" },
+      ]);
       screen.render();
     });
 
-    // Get station info
-    getStationList().then((stationList) => {
-      listUpdate(renderedStationUi, stationList, [
-        "State",
-        "Scanning",
-        "Frequency",
-        "Security",
+    // Get connection info
+    getActiveConnection().then((activeConnection) => {
+      listUpdate(renderedConnectionUi, activeConnection, [
+        { label: "Name", key: "ssid" },
+        { label: "Channel", key: "channel" },
+        { label: "Rate", key: "rate" },
+        // { label: "Security", key: "security" },
+        // { label: "Signal", key: "signal" },
       ]);
       screen.render();
     });
@@ -164,7 +169,7 @@ export async function initialize() {
 
     // Scan for networks
     try {
-      const networks = await scanNetworks();
+      const networks = await scanNetworks(rescan);
       return networks;
     } catch (err) {
       return {};
@@ -208,7 +213,7 @@ export async function initialize() {
     if (delay) {
       await asyncTimeout(delay);
     }
-    const networks = await reloadUiData();
+    const networks = await reloadUiData(true);
     connectingMessage.destroy();
     screen.render();
     return networks;

@@ -48,10 +48,58 @@ export async function getDeviceDetail(iface) {
   }
 }
 
+export async function getConnections() {
+  try {
+    const wifiInterface = await getWifiInterface();
+    const connectionsOutput = await runCommand([
+      "nmcli",
+      "-t",
+      "-f",
+      "AP",
+      "device",
+      "show",
+      wifiInterface,
+    ]);
+    const dictionary = new Map();
+    dictionary.set("IN-USE", { name: "connected", type: "boolean" });
+    dictionary.set("SSID", { name: "ssid", type: "string" });
+    dictionary.set("MODE", { name: "mode", type: "string" });
+    dictionary.set("CHAN", { name: "channel", type: "number" });
+    dictionary.set("RATE", { name: "rate", type: "string" });
+    dictionary.set("SIGNAL", { name: "signal", type: "number" });
+    dictionary.set("BARS", { name: "bars", type: "string" });
+    dictionary.set("SECURITY", { name: "security", type: "string" });
+    const connectionsLines = connectionsOutput.trim().split("\n");
+    const connections = [];
+    let connection;
+    for (const line of connectionsLines) {
+      if (!line) {
+        continue;
+      }
+      const parts = line.split(".")[1].split(":");
+      const [property, value] = parts;
+      if (!dictionary.has(property)) {
+        continue;
+      }
+      if (!connection || property === "IN-USE") {
+        connection = {};
+      }
+      connection[dictionary.get(property).name] = stringToType(
+        value,
+        dictionary.get(property).type,
+      );
+      if (property === "SECURITY") {
+        connections.push(connection);
+      }
+    }
+    return connections;
+  } catch (err) {}
+}
+
 /** @type {() => Promise<{[key: string], string}>} */
 export async function getStationInfo() {
   try {
-    const current = await getCurrentConnection();
+    const current = await getActiveConnectionTypes();
     const stationInfo = {
       state: current ? "connected" : "disconnected",
       scanning: "false",
@@ -66,7 +114,6 @@ export async function getStationInfo() {
         "ACTIVE,SSID,FREQ,SECURITY",
         "device",
         "wifi",
-        "list",
       ]);
 
       const stationLines = station.split("\n");
@@ -89,17 +136,25 @@ export async function getStationInfo() {
 }
 
 /** @type {() => Promise<{[key: string], string}[]>} */
-export async function getWifiList() {
+export async function getWifiList(rescan) {
+  const command = [
+    "nmcli",
+    "-t",
+    "-f",
+    "SSID,SECURITY,SIGNAL,IN-USE",
+    "device",
+    "wifi",
+    "list",
+  ];
+
+  if (rescan) {
+    command.push("--rescan");
+    command.push("yes");
+  }
+
   try {
-    const wifiList = await runCommand([
-      "nmcli",
-      "-t",
-      "-f",
-      "SSID,SECURITY,SIGNAL,IN-USE",
-      "device",
-      "wifi",
-      "list",
-    ]);
+    const wifiList = await runCommand(command);
+
     return arrayFromList(wifiList, (line) => {
       return objectFromString(line, ":", [
         { name: "ssid", type: "string" },
@@ -135,27 +190,7 @@ export async function getKnownNetworks() {
   }
 }
 
-// async function getStationInfo() {
-//   const stationInfo = await runCommand([
-//     "nmcli",
-//     "-t",
-//     "-f",
-//     "ACTIVE,SSID,FREQ,SECURITY",
-//     "device",
-//     "wifi",
-//     "list",
-//   ]);
-//   return arrayFromList(stationInfo, (station) => {
-//     return objectFromString(station, ":", [
-//       { name: "active", type: "string" },
-//       { name: "ssid", type: "string" },
-//       { name: "frequency", type: "string" },
-//       { name: "security", type: "string" },
-//     ]);
-//   });
-// }
-
-async function getCurrentConnection() {
+async function getActiveConnectionTypes() {
   try {
     const connection = await runCommand([
       "nmcli",
@@ -166,7 +201,7 @@ async function getCurrentConnection() {
       "show",
       "--active",
     ]);
-    return connection.split("\n")[0] ?? "";
+    return connection.trim().split("\n");
   } catch (err) {
     throw err;
   }
