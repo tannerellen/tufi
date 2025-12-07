@@ -7,7 +7,7 @@ export function inputUi(container, options) {
     top: options?.top ?? 0,
     left: 0,
     height: 1,
-    content: "Password",
+    content: options?.label ?? "Input",
     style: {
       fg: "blue",
     },

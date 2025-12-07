@@ -6,9 +6,11 @@ import { buttonUi } from "../ui/button.js";
 import { messageUi } from "../ui/message.js";
 import { registerNavigation, focusFormInput } from "../navigation.js";
 
-export function connectWifi(container, ssid, onDestroy) {
+export function connectWifi(container, ssid, security, onDestroy) {
   const screen = getScreen();
   let errorMessage;
+
+  const showPassword = !!security;
   // Create a form box
   const form = formUi(container, {
     title: `Connect: ${ssid}`,
@@ -17,6 +19,7 @@ export function connectWifi(container, ssid, onDestroy) {
   });
   const passwordInput = inputUi(form, {
     name: "password",
+    label: showPassword ? "Password" : "No password required",
     top: 2,
     censor: true,
   });
@@ -43,9 +46,15 @@ export function connectWifi(container, ssid, onDestroy) {
 
   // Focus the input
   form.focusNext();
+  if (!showPassword) {
+    setImmediate(() => {
+      form.submit();
+    });
+  }
 
   // Store focusable elements in order
   const focusableElements = [passwordInput, connectButton, cancelButton];
+
   registerNavigation(
     form,
     focusableElements,
@@ -98,7 +107,6 @@ export function connectWifi(container, ssid, onDestroy) {
   // Handle cancel button
   cancelButton.on("press", () => {
     // Clear form
-    passwordInput.setValue("");
     destroy();
   });
 

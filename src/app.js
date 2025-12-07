@@ -84,10 +84,11 @@ export async function initialize() {
     onSelect: (item, index) => {
       const rowData = renderedNetworksUi.rows[index];
       const ssid = rowData[0]; // First column is SSID
+      const security = rowData[1];
       screen.children.forEach((element) => {
         element.hide();
       });
-      connectWifi(screen, ssid, (submitted) => {
+      connectWifi(screen, ssid, security, (submitted) => {
         screen.children.forEach((element) => {
           element.show();
           reloadUiData(false, !submitted);
