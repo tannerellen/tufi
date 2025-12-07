@@ -96,6 +96,8 @@ export function listUpdate(ui, listArray, headerDictionary) {
     for (const headerItem of headerDictionary) {
       values.push(listItem[headerItem.key]?.toString());
     }
+    // Add extra empty at the end for scrollbar fix
+    values.push("");
     listData.push(values);
   }
 
