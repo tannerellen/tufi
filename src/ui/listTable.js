@@ -57,6 +57,10 @@ export function listUi(container, options) {
   });
 
   list.on("select", (item, index) => {
+    if (index < 1) {
+      // Not on an item or empty list so don't run
+      return;
+    }
     if (options?.onSelect) {
       options.onSelect(item, index);
     }
