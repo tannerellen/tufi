@@ -3,7 +3,11 @@ import { asyncTimeout } from "./utils/utils";
 import { containerBox } from "./ui/layout";
 import { listUi, listUpdate } from "./ui/listTable";
 import { getDeviceList } from "./modules/device";
-import { getActiveConnection } from "./modules/connection";
+import {
+  registerConnectionUi,
+  checkActiveConnection,
+  removeActiveConnection,
+} from "./modules/connection";
 import {
   registerNetworkUi,
   scanNetworks,
@@ -99,6 +103,8 @@ export async function initialize() {
 
   // Register the rendered network ui elements so we can use them in network module
   registerNetworkUi(renderedKnownNetworksUi, renderedNetworksUi);
+  registerConnectionUi(renderedConnectionUi);
+
   // populate ui with data
   reloadUiData();
   renderedNetworksUi.focus();
@@ -142,6 +148,7 @@ export async function initialize() {
   // Private functions
   async function reloadUiData(rescan, noScan) {
     saveRowPositions([renderedNetworksUi, renderedKnownNetworksUi]);
+
     getDeviceList().then((deviceList) => {
       listUpdate(renderedDeviceUi, deviceList, [
         { label: "Name", key: "iface" },
@@ -152,16 +159,7 @@ export async function initialize() {
     });
 
     // Get connection info
-    getActiveConnection().then((activeConnection) => {
-      listUpdate(renderedConnectionUi, activeConnection, [
-        { label: "Name", key: "ssid" },
-        { label: "Channel", key: "channel" },
-        { label: "Rate", key: "rate" },
-        // { label: "Security", key: "security" },
-        // { label: "Signal", key: "signal" },
-      ]);
-      screen.render();
-    });
+    checkActiveConnection();
 
     if (noScan) {
       return {};
@@ -181,9 +179,13 @@ export async function initialize() {
       const index = element.selected;
       const rowData = element.rows[index];
       const ssid = rowData[0]; // First column is SSID
+      const connected = rowData[3];
       try {
         let networks;
         await deleteNetwork(ssid);
+        if (connected) {
+          await removeActiveConnection();
+        }
         for (let i = 0; i < 20; i++) {
           networks = await scan(500); // after network has a chance to settle scan network
           if (

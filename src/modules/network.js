@@ -1,7 +1,6 @@
 import { getScreen } from "../screen";
 import {
   getWifiList,
-  getConnections,
   getKnownNetworks,
   deleteNetworkConnection,
   connectToNetwork,
@@ -11,6 +10,7 @@ import {
 import { listUpdate } from "../ui/listTable";
 import { restoreRowPositions } from "../navigation";
 import { messageUi } from "../ui/message";
+import { asyncTimeout } from "../utils/utils";
 
 let rawLists;
 let knownNetworksUi;
