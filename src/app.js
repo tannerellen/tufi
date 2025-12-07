@@ -114,6 +114,22 @@ export async function initialize() {
   registerNavigation(screen, [renderedNetworksUi, renderedKnownNetworksUi]);
 
   // App level keys. Todo: Should these just be assigned to our network list elements?
+  // Connect to hidden network
+  screen.key(["h"], async (ch, key) => {
+    screen.children.forEach((element) => {
+      element.hide();
+    });
+    connectWifi(screen, "", "unknown", (submitted) => {
+      screen.children.forEach((element) => {
+        element.show();
+        reloadUiData(false, !submitted);
+        renderedNetworksUi.focus();
+        screen.render();
+      });
+    });
+  });
+
+  // Turn off wifi power
   screen.key(["o"], async function (ch, key) {
     try {
       const isEnabled = await togglePower();

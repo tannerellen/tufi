@@ -9,26 +9,41 @@ import { registerNavigation, focusFormInput } from "../navigation.js";
 export function connectWifi(container, ssid, security, onDestroy) {
   const screen = getScreen();
   let errorMessage;
+  let top = 0;
 
   const showPassword = !!security;
   // Create a form box
   const form = formUi(container, {
-    title: `Connect: ${ssid}`,
+    title: `Connect: ${ssid ? ssid : "hidden"}`,
     width: "shrink",
-    height: 13,
+    height: ssid ? 13 : 17,
   });
+
+  let ssidInput;
+  if (!ssid) {
+    top = top + 2;
+    ssidInput = inputUi(form, {
+      name: "ssid",
+      label: "SSID",
+      top: top,
+    });
+    top = top + 2;
+  }
+
+  top = top + 2;
   const passwordInput = inputUi(form, {
     name: "password",
     label: showPassword ? "Password" : "No password required",
-    top: 2,
+    top: top,
     censor: true,
   });
 
+  top = top + 6;
   // Add Connect button
   const connectButton = buttonUi(form, {
     name: "connect",
     content: "Connect",
-    top: 8,
+    top: top,
     right: 1,
     width: 10,
     color: "green",
@@ -38,7 +53,7 @@ export function connectWifi(container, ssid, security, onDestroy) {
   const cancelButton = buttonUi(form, {
     name: "cancel",
     content: "Cancel",
-    top: 8,
+    top: top,
     right: 12,
     width: 10,
     color: "red",
@@ -54,6 +69,9 @@ export function connectWifi(container, ssid, security, onDestroy) {
 
   // Store focusable elements in order
   const focusableElements = [passwordInput, connectButton, cancelButton];
+  if (ssidInput) {
+    focusableElements.unshift(ssidInput);
+  }
 
   registerNavigation(
     form,
@@ -78,7 +96,7 @@ export function connectWifi(container, ssid, security, onDestroy) {
     connectButton.hide();
     cancelButton.hide();
     const connectingMessage = messageUi(form, {
-      top: 7,
+      top: connectButton.top - 2,
       left: 0,
       right: 0,
       height: "shrink",
@@ -86,7 +104,10 @@ export function connectWifi(container, ssid, security, onDestroy) {
     });
     screen.render();
     try {
-      const connection = await connectToNetwork(ssid, data.password);
+      const connection = await connectToNetwork(
+        ssidInput ? data.ssid : ssid,
+        data.password,
+      );
       destroy(true);
     } catch (err) {
       connectingMessage.destroy();
