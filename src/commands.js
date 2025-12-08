@@ -1,13 +1,13 @@
 export async function getWifiInterface() {
   try {
-    const wifiInterface = await runCommand([
+    const iface = await runCommand([
       "nmcli",
       "-t",
       "-f",
       "DEVICE,TYPE",
       "device",
     ]);
-    const interfaceLines = wifiInterface.split("\n");
+    const interfaceLines = iface.split("\n");
     for (const line of interfaceLines) {
       if (line.includes(":wifi")) {
         return line.split(":")[0];
@@ -49,8 +49,8 @@ export async function getDeviceDetail(iface) {
 }
 
 export async function getDeviceLink() {
-  const wifiInterface = await getWifiInterface();
-  const link = await runCommand(["iw", "dev", wifiInterface, "link"]);
+  const iface = await getWifiInterface();
+  const link = await runCommand(["iw", "dev", iface, "link"]);
 
   const dictionary = new Map();
   dictionary.set("SSID", { name: "ssid", type: "string" });
@@ -71,14 +71,8 @@ export async function getDeviceLink() {
 
 export async function stationDump() {
   try {
-    const wifiInterface = await getWifiInterface();
-    const dump = await runCommand([
-      "iw",
-      "dev",
-      wifiInterface,
-      "station",
-      "dump",
-    ]);
+    const iface = await getWifiInterface();
+    const dump = await runCommand(["iw", "dev", iface, "station", "dump"]);
     return dump;
   } catch (err) {
     throw err;
@@ -86,8 +80,8 @@ export async function stationDump() {
 }
 
 export async function getDeviceInfo() {
-  const wifiInterface = await getWifiInterface();
-  const info = await runCommand(["iw", "dev", wifiInterface, "info"]);
+  const iface = await getWifiInterface();
+  const info = await runCommand(["iw", "dev", iface, "info"]);
 
   const dictionary = new Map();
   dictionary.set("addr", { name: "macAddress", type: "string" });
@@ -99,7 +93,7 @@ export async function getDeviceInfo() {
 
 export async function getConnections() {
   try {
-    const wifiInterface = await getWifiInterface();
+    const iface = await getWifiInterface();
     const connectionsOutput = await runCommand([
       "nmcli",
       "-t",
@@ -107,7 +101,7 @@ export async function getConnections() {
       "AP",
       "device",
       "show",
-      wifiInterface,
+      iface,
     ]);
     const dictionary = new Map();
     dictionary.set("IN-USE", { name: "connected", type: "boolean" });
@@ -287,8 +281,8 @@ export async function deleteNetworkConnection(ssid) {
 
 export async function disconnectFromNetwork(ssid) {
   try {
-    const wifiInterface = await getWifiInterface();
-    await runCommand(["nmcli", "device", "disconnect", wifiInterface]);
+    const iface = await getWifiInterface();
+    await runCommand(["nmcli", "device", "disconnect", iface]);
     return;
   } catch (err) {
     return; // Don't throw on error because it may not delete if connection doesn't exist
