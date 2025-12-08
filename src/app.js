@@ -16,11 +16,7 @@ import {
 } from "./modules/network";
 import { togglePower } from "./modules/device";
 import { connectWifi } from "./modules/wifi-dialog";
-import {
-  registerNavigation,
-  saveRowPositions,
-  restoreRowPositions,
-} from "./navigation";
+import { registerNavigation, saveRowPositions } from "./navigation";
 import { messageUi } from "./ui/message";
 
 export async function initialize() {

@@ -48,6 +48,55 @@ export async function getDeviceDetail(iface) {
   }
 }
 
+export async function getDeviceLink() {
+  const wifiInterface = await getWifiInterface();
+  const link = await runCommand(["iw", "dev", wifiInterface, "link"]);
+
+  const dictionary = new Map();
+  dictionary.set("SSID", { name: "ssid", type: "string" });
+  dictionary.set("freq", { name: "frequency", type: "number" });
+  dictionary.set("rx bitrate", { name: "rate", type: "string" });
+
+  const deviceLink = processCommandOutput(link, dictionary, ": ");
+  // Fix rate value
+  if (Object.keys(deviceLink).length) {
+    const [rate, measure, width] = deviceLink.rate.split(" ");
+    deviceLink.rate = parseFloat(rate || 0);
+    deviceLink.channelWidth = width?.replace("M", " M");
+    deviceLink.band = getBand(deviceLink.frequency);
+    deviceLink.channel = calculateChannel(deviceLink.frequency);
+  }
+  return deviceLink;
+}
+
+export async function stationDump() {
+  try {
+    const wifiInterface = await getWifiInterface();
+    const dump = await runCommand([
+      "iw",
+      "dev",
+      wifiInterface,
+      "station",
+      "dump",
+    ]);
+    return dump;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function getDeviceInfo() {
+  const wifiInterface = await getWifiInterface();
+  const info = await runCommand(["iw", "dev", wifiInterface, "info"]);
+
+  const dictionary = new Map();
+  dictionary.set("addr", { name: "macAddress", type: "string" });
+  dictionary.set("channel", { name: "channel", type: "string" });
+
+  const deviceInfo = processCommandOutput(info, dictionary, " ");
+  return deviceInfo;
+}
+
 export async function getConnections() {
   try {
     const wifiInterface = await getWifiInterface();
@@ -289,6 +338,72 @@ function arrayFromList(list, lineMutateFn) {
     mutatedLines.push(lineMutateFn(line));
   }
   return mutatedLines;
+}
+
+/**
+ * Calculate channel number from frequency
+ * @param {number} freq - Frequency in MHz
+ * @returns {number|null} Channel number
+ */
+function calculateChannel(frequency) {
+  if (!frequency) return 0;
+
+  // 6 GHz band (Wi-Fi 6E)
+  if (frequency >= 5925 && frequency <= 7125) {
+    return Math.floor((frequency - 5950) / 5);
+  }
+
+  // 5 GHz band
+  if (frequency >= 5170 && frequency <= 5825) {
+    return Math.floor((frequency - 5000) / 5);
+  }
+
+  // 2.4 GHz band
+  if (frequency >= 2412 && frequency <= 2472) {
+    return Math.floor((frequency - 2407) / 5);
+  }
+
+  // Channel 14 (2.4 GHz)
+  if (frequency === 2484) {
+    return 14;
+  }
+
+  return null;
+}
+
+/** @type {(frequency) => string} */
+function getBand(frequency) {
+  if (!frequency) {
+    return "Unknown";
+  }
+  if (frequency >= 5925) {
+    return "6 GHz";
+  }
+  if (frequency >= 5170) {
+    return "5 GHz";
+  }
+  if (frequency >= 2412) {
+    return "2.4 GHz";
+  }
+  return "Unknown";
+}
+
+/** @type {(commandOutput: string, fieldDictionary: Map, fieldSeperator: string) => {[key: string]: any}} */
+function processCommandOutput(commandOutput, fieldDictionary, fieldSeperator) {
+  const result = {};
+  const lines = commandOutput.trim().split("\n");
+  for (const line of lines) {
+    const parts = line.trim().split(fieldSeperator);
+    const [property, value] = parts;
+    if (!fieldDictionary.has(property)) {
+      continue;
+    }
+    result[fieldDictionary.get(property).name] = stringToType(
+      value,
+      fieldDictionary.get(property).type,
+    );
+  }
+  return result;
 }
 
 /** @type {(command: string[]) => Promise<string>} */
