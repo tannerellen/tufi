@@ -18,8 +18,11 @@ export async function checkActiveConnection() {
     for (let i = 0; i < 20; i++) {
       const deviceLink = await getDeviceLink();
       const waitingForData =
-        !!deviceLink && (!deviceLink?.channelWidth || deviceLink?.rate < 100);
-      activeConnection = deviceLink ? [mutateConnectionEntry(deviceLink)] : [];
+        Object.keys(deviceLink).length &&
+        (!deviceLink?.channelWidth || deviceLink?.rate < 100);
+      activeConnection = Object.keys(deviceLink).length
+        ? [mutateConnectionEntry(deviceLink)]
+        : [];
 
       if (!waitingForData) {
         break;
