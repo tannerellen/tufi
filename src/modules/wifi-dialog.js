@@ -4,7 +4,7 @@ import { formUi } from "../ui/form.js";
 import { inputUi } from "../ui/input.js";
 import { buttonUi } from "../ui/button.js";
 import { messageUi } from "../ui/message.js";
-import { registerNavigation, focusFormInput } from "../navigation.js";
+import { registerNavigation } from "../navigation.js";
 
 export function connectWifi(container, ssid, security, onDestroy) {
   const screen = getScreen();
@@ -61,11 +61,6 @@ export function connectWifi(container, ssid, security, onDestroy) {
 
   // Focus the input
   form.focusNext();
-  if (!showPassword) {
-    setImmediate(() => {
-      form.submit();
-    });
-  }
 
   // Store focusable elements in order
   const focusableElements = [passwordInput, connectButton, cancelButton];
@@ -105,8 +100,9 @@ export function connectWifi(container, ssid, security, onDestroy) {
     screen.render();
     try {
       const connection = await connectToNetwork(
-        ssidInput ? data.ssid : ssid,
+        !!ssidInput ? data.ssid : ssid,
         data.password,
+        !!ssidInput,
       );
       destroy(true);
     } catch (err) {
@@ -120,7 +116,7 @@ export function connectWifi(container, ssid, security, onDestroy) {
         height: "shrink",
         content: err.message,
       });
-      focusFormInput(form, passwordInput);
+      passwordInput.focus();
       screen.render();
     }
   });

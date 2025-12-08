@@ -43,20 +43,6 @@ export function getRowState(element) {
   return rowStates.get(element);
 }
 
-export function focusFormInput(formElement, inputElement, count) {
-  const maxFormElements = 25; // To prevent endless loops if the target doesn't exist
-  if (inputElement.focused || count > maxFormElements) {
-    return;
-  } else {
-    if (!count) {
-      count = 0;
-    }
-    count++;
-    formElement.focusNext();
-    focusFormInput(formElement, inputElement, count);
-  }
-}
-
 export function registerNavigation(
   container,
   focusableElements,

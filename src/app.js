@@ -158,6 +158,16 @@ export async function initialize() {
 
   registerKnownNetworkActions(renderedKnownNetworksUi);
 
+  // Run a timer for ui updates
+  // updateTimer(15); // Disabled for now, maybe a keybind to start autoscan?
+
+  function updateTimer(seconds) {
+    setTimeout(() => {
+      reloadUiData();
+      updateTimer(seconds);
+    }, 1000 * seconds);
+  }
+
   // Private functions
   async function reloadUiData(rescan, noScan) {
     saveRowPositions([renderedNetworksUi, renderedKnownNetworksUi]);

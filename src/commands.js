@@ -251,7 +251,7 @@ async function getActiveConnectionTypes() {
 }
 
 // connect functions
-export async function connectToNetwork(ssid, password, hidden = false) {
+export async function connectToNetwork(ssid, password, hidden) {
   const cmd = ["nmcli", "device", "wifi", "connect", ssid];
   if (password) {
     cmd.push("password");
