@@ -18,7 +18,7 @@ export function createScreen() {
   });
 
   // Quit on Escape, q, or Control-C.
-  screen.key(["q", "C-c"], function (ch, key) {
+  screen.key(["q", "C-c"], function () {
     return process.exit(0);
   });
 

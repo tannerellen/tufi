@@ -2,6 +2,7 @@ import { getScreen } from "./screen";
 
 let rowStates = new Map();
 
+/** @type {(focusableElements: [{[key: string]: any}]) => void} */
 export function saveRowPositions(focusableElements) {
   focusableElements.forEach((element, index) => {
     // Set default current row for list type items
@@ -17,6 +18,7 @@ export function saveRowPositions(focusableElements) {
   });
 }
 
+/** @type {() => void} */
 export function restoreRowPositions() {
   for (const [key, value] of rowStates) {
     if (!key.visible) {
@@ -39,6 +41,7 @@ export function restoreRowPositions() {
   }
 }
 
+/** @type {(element: {[key: string]: any}) => Map<any, {index: number, id: string}>} */
 export function getRowState(element) {
   return rowStates.get(element);
 }
@@ -82,18 +85,25 @@ export function registerNavigation(
     });
   });
 
-  // Helper function to focus element
+  /**
+   * Helper function to focus element
+   * @type {(index: number) => void} */
   function focusElement(index) {
     currentFocusIndex = index;
     focusableElements[currentFocusIndex].focus();
     screen.render();
   }
-  // Helper function to move focus forward
+
+  /**
+   * Helper function to move focus forward
+   * @type {(index: number) => void} */
   function focusNext() {
     focusElement((currentFocusIndex + 1) % focusableElements.length);
   }
 
-  // Helper function to move focus backward
+  /**
+   * Helper function to move focus backward
+   * @type {(index: number) => void} */
   function focusPrev() {
     focusElement(
       (currentFocusIndex - 1 + focusableElements.length) %
