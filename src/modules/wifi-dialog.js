@@ -15,7 +15,7 @@ export function connectWifi(container, ssid, security, onDestroy) {
   // Create a form box
   const form = formUi(container, {
     title: `Connect: ${ssid ? ssid : "hidden"}`,
-    width: "shrink",
+    width: 40,
     height: ssid ? 13 : 17,
   });
 
@@ -95,7 +95,8 @@ export function connectWifi(container, ssid, security, onDestroy) {
       left: 0,
       right: 0,
       height: "shrink",
-      content: "Attempting to connect...",
+      content: "Connecting...",
+      loader: true,
     });
     screen.render();
     try {

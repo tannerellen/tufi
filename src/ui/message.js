@@ -1,11 +1,12 @@
 import blessed from "../../external-dependencies/reblessed";
+import { startLoader } from "./loading";
 
 export function messageUi(container, options) {
   const color = options?.color ?? "blue";
   const boxConfig = {
     parent: container,
     name: options?.name ?? "",
-    content: options?.content ?? "",
+    content: options?.content && !options?.loader ? options.content : "",
     padding: {
       top: 0,
       right: 1,
@@ -34,5 +35,9 @@ export function messageUi(container, options) {
     boxConfig.width = options.width;
   }
   const message = blessed.box(boxConfig);
+
+  if (options?.loader) {
+    startLoader(message, options?.content);
+  }
   return message;
 }

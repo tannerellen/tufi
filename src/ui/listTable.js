@@ -45,7 +45,7 @@ export function listUi(container, options) {
         fg: "white",
       },
     },
-    data: [["Loading..."]],
+    data: [[""]],
   });
 
   list.key(["space"], async function (ch, key) {

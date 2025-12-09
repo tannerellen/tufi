@@ -26,6 +26,7 @@ export async function togglePower() {
       right: 0,
       height: "shrink",
       content: `Turning wifi ${newState}...`,
+      loader: true,
     });
     screen.render();
     await wifiPower(newState);

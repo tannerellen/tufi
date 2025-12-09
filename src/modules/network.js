@@ -79,6 +79,7 @@ export async function toggleWifiConnection(ssid, connected) {
     right: 0,
     height: "shrink",
     content: messageContent,
+    loader: true,
   });
   screen.render();
   if (connected) {

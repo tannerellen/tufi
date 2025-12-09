@@ -18,11 +18,13 @@ import { togglePower } from "./modules/device";
 import { connectWifi } from "./modules/wifi-dialog";
 import { registerNavigation, saveRowPositions } from "./navigation";
 import { messageUi } from "./ui/message";
+import { startLoader } from "./ui/loading";
 
 export async function initialize() {
   // create UI
   // create main screen object
   const screen = createScreen();
+
   // device
   const deviceContainer = containerBox({
     title: "Device",
@@ -102,8 +104,6 @@ export async function initialize() {
   registerNetworkUi(renderedKnownNetworksUi, renderedNetworksUi);
   registerConnectionUi(renderedConnectionUi);
 
-  // populate ui with data
-  reloadUiData();
   renderedNetworksUi.focus();
 
   // Register navigation keys
@@ -157,6 +157,12 @@ export async function initialize() {
   });
 
   registerKnownNetworkActions(renderedKnownNetworksUi);
+
+  // Populate ui with data
+  const loader = startLoader(renderedNetworksUi, "Getting networks...");
+  await reloadUiData();
+  // Stop loader
+  loader();
 
   // Run a timer for ui updates
   // updateTimer(15); // Disabled for now, maybe a keybind to start autoscan?
@@ -233,6 +239,7 @@ export async function initialize() {
       right: 0,
       height: "shrink",
       content: "Scanning...",
+      loader: true,
     });
     screen.render();
     if (delay) {
