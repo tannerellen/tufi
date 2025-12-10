@@ -1,6 +1,6 @@
 /**
- * @typedef {import('../types/commands.d.ts').StringKeyedObject} StringKeyedObject
- * @typedef {import('../types/commands.d.ts').FieldMap} FieldMap
+ * @typedef {import('../types/types').StringKeyedObject} StringKeyedObject
+ * @typedef {import('../types/types').FieldMap} FieldMap
  * */
 
 /** @type {() => Promise<string>} */

@@ -232,6 +232,7 @@ export async function initialize() {
     });
   }
 
+  /** @type {(delay: number) => Promise<>} */
   async function scan(delay) {
     const connectingMessage = messageUi(screen, {
       top: screen.height - 1,

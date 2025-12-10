@@ -1,6 +1,7 @@
 export type Screen = {
   render: () => void;
   key: (keys: string[], callback: (ch: string, key: string) => void) => void;
+  append: (BlessedElement) => void;
 };
 
 export type BlessedElement = {
