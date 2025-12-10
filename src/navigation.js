@@ -1,5 +1,9 @@
 import { getScreen } from "./screen";
 
+/**
+ * @typedef {import('../types/blessed.d.ts').BlessedElement} BlessedElement
+ */
+
 let rowStates = new Map();
 
 /** @type {(focusableElements: [{[key: string]: any}]) => void} */
@@ -46,6 +50,7 @@ export function getRowState(element) {
   return rowStates.get(element);
 }
 
+/** @type {(container: BlessedElement, focusableElements: BlessedElement[], onEnter: Function, onEscape: Function) => void} */
 export function registerNavigation(
   container,
   focusableElements,
@@ -96,14 +101,14 @@ export function registerNavigation(
 
   /**
    * Helper function to move focus forward
-   * @type {(index: number) => void} */
+   * @type {() => void} */
   function focusNext() {
     focusElement((currentFocusIndex + 1) % focusableElements.length);
   }
 
   /**
    * Helper function to move focus backward
-   * @type {(index: number) => void} */
+   * @type {() => void} */
   function focusPrev() {
     focusElement(
       (currentFocusIndex - 1 + focusableElements.length) %

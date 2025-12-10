@@ -1,8 +1,18 @@
-import blessed from "../external-dependencies/reblessed";
+import reblessed from "../external-dependencies/reblessed";
 
+/**
+ * @typedef {import('../types/blessed.d.ts').Reblessed} Reblessed
+ * @typedef {import('../types/blessed.d.ts').Screen} Screen
+ */
+
+/** @type {Reblessed} */
+const blessed = /** @type {any} */ (reblessed);
+reblessed;
+
+/** @type {Screen} */
 let currentScreen;
 
-/** @type {() => Object} */
+/** @type {() => Screen} */
 export function createScreen() {
   // Create a screen object.
   const screen = blessed.screen({
@@ -22,27 +32,11 @@ export function createScreen() {
     return process.exit(0);
   });
 
-  // Blessed internally handles these signals:
-  process.on("SIGINT", () => {
-    // Clean up before exit
-    console.log("sigint");
-  });
-
-  process.on("SIGTERM", () => {
-    // Clean up before exit
-    console.log("sigterm");
-  });
-
   currentScreen = screen;
   return screen;
 }
 
-/** @type {() => Object} */
+/** @type {() => Screen} */
 export function getScreen() {
   return currentScreen;
 }
-
-// function cleanup() {
-//   screen.destroy();
-//   return process.exit(0);
-// }

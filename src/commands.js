@@ -1,3 +1,9 @@
+/**
+ * @typedef {import('../types/commands.d.ts').StringKeyedObject} StringKeyedObject
+ * @typedef {import('../types/commands.d.ts').FieldMap} FieldMap
+ * */
+
+/** @type {() => Promise<string>} */
 export async function getWifiInterface() {
   try {
     const iface = await runCommand([
@@ -19,6 +25,7 @@ export async function getWifiInterface() {
   }
 }
 
+/** @type {(state: string) => Promise<void>} */
 export async function wifiPower(state) {
   try {
     await runCommand(["nmcli", "radio", "wifi", state]);
@@ -28,7 +35,7 @@ export async function wifiPower(state) {
   }
 }
 
-/** @type {(iface: string) => Promise<{[key: string], string}>} */
+/** @type {(iface: string) => Promise<{[key: string]: string}[]>} */
 export async function getDeviceDetail(iface) {
   try {
     const macAddress = await runCommand([
@@ -48,6 +55,7 @@ export async function getDeviceDetail(iface) {
   }
 }
 
+/** @type {() => Promise<StringKeyedObject>} */
 export async function getDeviceLink() {
   const iface = await getWifiInterface();
   const link = await runCommand(["iw", "dev", iface, "link"]);
@@ -69,6 +77,7 @@ export async function getDeviceLink() {
   return deviceLink;
 }
 
+/** @type {() => Promise<string>} */
 export async function stationDump() {
   try {
     const iface = await getWifiInterface();
@@ -79,6 +88,7 @@ export async function stationDump() {
   }
 }
 
+/** @type {() => Promise<StringKeyedObject>} */
 export async function getDeviceInfo() {
   const iface = await getWifiInterface();
   const info = await runCommand(["iw", "dev", iface, "info"]);
@@ -91,6 +101,7 @@ export async function getDeviceInfo() {
   return deviceInfo;
 }
 
+/** @type {() => Promise<StringKeyedObject[]>} */
 export async function getConnections() {
   try {
     const iface = await getWifiInterface();
@@ -103,6 +114,7 @@ export async function getConnections() {
       "show",
       iface,
     ]);
+    /** @type {FieldMap} */
     const dictionary = new Map();
     dictionary.set("IN-USE", { name: "connected", type: "boolean" });
     dictionary.set("SSID", { name: "ssid", type: "string" });
@@ -113,7 +125,9 @@ export async function getConnections() {
     dictionary.set("BARS", { name: "bars", type: "string" });
     dictionary.set("SECURITY", { name: "security", type: "string" });
     const connectionsLines = connectionsOutput.trim().split("\n");
+    /** @type {StringKeyedObject[]} */
     const connections = [];
+    /** @type {StringKeyedObject | undefined} */
     let connection;
     for (const line of connectionsLines) {
       if (!line) {
@@ -136,10 +150,12 @@ export async function getConnections() {
       }
     }
     return connections;
-  } catch (err) {}
+  } catch (err) {
+    return [];
+  }
 }
 
-/** @type {() => Promise<{[key: string], string}>} */
+/** @type {() => Promise<{[key: string]: string}[]>} */
 export async function getStationInfo() {
   try {
     const current = await getActiveConnectionTypes();
@@ -178,7 +194,7 @@ export async function getStationInfo() {
   }
 }
 
-/** @type {() => Promise<{[key: string], string}[]>} */
+/** @type {(rescan?: boolean) => Promise<{StringKeyedObject[]>} */
 export async function getWifiList(rescan) {
   const command = [
     "nmcli",
@@ -211,7 +227,7 @@ export async function getWifiList(rescan) {
   }
 }
 
-/** @type {() => Promise<{[key: string], string}[]>} */
+/** @type {() => Promise<StringKeyedObject[]>} */
 export async function getKnownNetworks() {
   try {
     const networks = await runCommand([
@@ -222,17 +238,20 @@ export async function getKnownNetworks() {
       "connection",
       "show",
     ]);
-    return arrayFromList(networks, (network) => {
-      return objectFromString(network, ":", [
-        { name: "ssid", type: "string" },
-        { name: "type", type: "string" },
-      ]);
-    });
+    return /** @type {StringKeyedObject[]} */ (
+      arrayFromList(networks, (network) => {
+        return objectFromString(network, ":", [
+          { name: "ssid", type: "string" },
+          { name: "type", type: "string" },
+        ]);
+      })
+    );
   } catch (err) {
     throw err;
   }
 }
 
+/** @type {() => Promise<string[]>} */
 async function getActiveConnectionTypes() {
   try {
     const connection = await runCommand([
@@ -251,6 +270,7 @@ async function getActiveConnectionTypes() {
 }
 
 // connect functions
+/** @type {(ssid: string, password: string, hidden: boolean) => Promise<string>} */
 export async function connectToNetwork(ssid, password, hidden) {
   const cmd = ["nmcli", "device", "wifi", "connect", ssid];
   if (password) {
@@ -270,6 +290,7 @@ export async function connectToNetwork(ssid, password, hidden) {
   }
 }
 
+/** @type {(ssid: string) => Promise<void>} */
 export async function deleteNetworkConnection(ssid) {
   try {
     await runCommand(["nmcli", "connection", "delete", ssid]);
@@ -279,6 +300,7 @@ export async function deleteNetworkConnection(ssid) {
   }
 }
 
+/** @type {(ssid: string) => Promise<void>} */
 export async function disconnectFromNetwork(ssid) {
   try {
     const iface = await getWifiInterface();
@@ -289,6 +311,7 @@ export async function disconnectFromNetwork(ssid) {
   }
 }
 
+/** @type {() => Promise<boolean>} */
 export async function isWifiEnabled() {
   try {
     const enabled = await runCommand(["nmcli", "radio", "wifi"]);
@@ -299,7 +322,7 @@ export async function isWifiEnabled() {
 }
 
 // util functions
-/** @type {(value: string, type: 'string' | 'number' | 'boolean') => string | number} */
+/** @type {(value: string, type: 'string' | 'number' | 'boolean') => string | number | boolean} */
 function stringToType(value, type) {
   if (type === "number") {
     return Number(value);
@@ -309,10 +332,11 @@ function stringToType(value, type) {
     return value;
   }
 }
-
-/** @type {(input: string, separator: string, labels: string[]) => {[key: string], string}} */
+/** @typedef {{name: string, type: 'string' | 'number' | 'boolean'}} Label */
+/** @type {(input: string, separator: string, labels: Label[]) => {[key: string]: string | number | boolean}} */
 function objectFromString(input, separator, labels) {
   const inputParts = input.split(separator);
+  /** @type {{[key: string]: string | number | boolean}} */
   const output = {};
   for (let i = 0; i < labels.length; i++) {
     output[labels[i].name] = stringToType(inputParts[i], labels[i].type);
@@ -320,7 +344,9 @@ function objectFromString(input, separator, labels) {
   return output;
 }
 
-/** @type {(list: string[], lineMutateFn: Function) => any[]} */
+/**
+ * Convert return separated list from command output to an array
+ * @type {<T>(list: string, lineMutateFn?: (line: string) => T) => (string | T)[]} */
 function arrayFromList(list, lineMutateFn) {
   const lines = list.split("\n");
   if (!lineMutateFn) {
@@ -336,9 +362,7 @@ function arrayFromList(list, lineMutateFn) {
 
 /**
  * Calculate channel number from frequency
- * @param {number} freq - Frequency in MHz
- * @returns {number|null} Channel number
- */
+ * @type {(frequency: number) => number} */
 function calculateChannel(frequency) {
   if (!frequency) return 0;
 
@@ -362,10 +386,10 @@ function calculateChannel(frequency) {
     return 14;
   }
 
-  return null;
+  return 0;
 }
 
-/** @type {(frequency) => string} */
+/** @type {(frequency: number) => string} */
 function getBand(frequency) {
   if (!frequency) {
     return "Unknown";
@@ -382,19 +406,20 @@ function getBand(frequency) {
   return "Unknown";
 }
 
-/** @type {(commandOutput: string, fieldDictionary: Map, fieldSeperator: string) => {[key: string]: any}} */
-function processCommandOutput(commandOutput, fieldDictionary, fieldSeperator) {
+/** @type {(commandOutput: string, fieldMap: FieldMap, fieldSeperator: string) => {[key: string]: any}} */
+function processCommandOutput(commandOutput, fieldMap, fieldSeperator) {
+  /** @type {{[key: string]: string | number | boolean}} */
   const result = {};
   const lines = commandOutput.trim().split("\n");
   for (const line of lines) {
     const parts = line.trim().split(fieldSeperator);
     const [property, value] = parts;
-    if (!fieldDictionary.has(property)) {
+    if (!fieldMap.has(property)) {
       continue;
     }
-    result[fieldDictionary.get(property).name] = stringToType(
+    result[fieldMap.get(property).name] = stringToType(
       value,
-      fieldDictionary.get(property).type,
+      fieldMap.get(property).type,
     );
   }
   return result;
@@ -407,22 +432,24 @@ async function runCommand(command) {
       stdout: "pipe", // Explicitly pipe stdout
       stderr: "pipe", // Explicitly pipe stderr
     });
+
     const [stdout, stderr] = await Promise.all([
-      proc.stdout.text(),
-      proc.stderr.text(),
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
     ]);
 
     const exitCode = await proc.exited;
-
     if (exitCode !== 0) {
       throw new Error(commandErrorToString(stderr));
     }
+
     return stdout ? stdout.trim() : stdout;
   } catch (err) {
     throw err;
   }
 }
 
+/** @type {(errorMessage: string) => string} */
 function commandErrorToString(errorMessage) {
   if (errorMessage.includes("Error: ")) {
     return errorMessage.split("Error: ")[1].trim();
