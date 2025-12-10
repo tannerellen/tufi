@@ -8,6 +8,7 @@ import {
 import { messageUi } from "../ui/message";
 import { asyncTimeout } from "../utils/utils";
 
+/** @type {() => Promise<{[key: string]: string}[]>} */
 export async function getDeviceList() {
   const iface = await getWifiInterface();
   const deviceDetail = await getDeviceDetail(iface);
@@ -15,6 +16,7 @@ export async function getDeviceList() {
   return deviceDetail;
 }
 
+/** @type {() => Promise<boolean>} */
 export async function togglePower() {
   const screen = getScreen();
   try {
