@@ -20,6 +20,10 @@ import { registerNavigation, saveRowPositions } from "./navigation";
 import { messageUi } from "./ui/message";
 import { startLoader } from "./ui/loading";
 
+/** * @typedef {import('../types/blessed.d.ts').BlessedElement} BlessedElement */
+/** * @typedef {import('../types/types.d.ts').NetworkLists} NetworkLists */
+/** * @typedef {import('../types/types.d.ts').Network} Network */
+
 export async function initialize() {
   // create UI
   // create main screen object
@@ -58,13 +62,17 @@ export async function initialize() {
   screen.append(knownNetworksContainer);
   const renderedKnownNetworksUi = listUi(knownNetworksContainer, {
     name: "focus-known-networks",
-    onSelect: async (item, index) => {
-      const rowData = renderedKnownNetworksUi.rows[index];
-      const ssid = rowData[0]; // First column is SSID
-      const connected = !!rowData[3];
-      await toggleWifiConnection(ssid, connected);
-      await reloadUiData();
-    },
+    onSelect:
+      /** @type {(item: BlessedElement, index: number) => Promise<void>} */ async (
+        item,
+        index,
+      ) => {
+        const rowData = renderedKnownNetworksUi.rows[index];
+        const ssid = rowData[0]; // First column is SSID
+        const connected = !!rowData[3];
+        await toggleWifiConnection(ssid, connected);
+        await reloadUiData();
+      },
   });
 
   // all networks
@@ -79,21 +87,29 @@ export async function initialize() {
   screen.append(allNetworksContainer);
   const renderedNetworksUi = listUi(allNetworksContainer, {
     name: "focus-all-networks",
-    onSelect: (item, index) => {
+    onSelect: /** @type {(item: BlessedElement, index: number) => void} */ (
+      item,
+      index,
+    ) => {
       const rowData = renderedNetworksUi.rows[index];
       const ssid = rowData[0]; // First column is SSID
       const security = rowData[1];
       screen.children.forEach((element) => {
         element.hide();
       });
-      connectWifi(screen, ssid, security, (submitted) => {
-        screen.children.forEach((element) => {
-          element.show();
-          reloadUiData(false, !submitted);
-          renderedNetworksUi.focus();
-          screen.render();
-        });
-      });
+      connectWifi(
+        screen,
+        ssid,
+        security,
+        /** @type {(submitted: boolean) => void} */ (submitted) => {
+          screen.children.forEach((element) => {
+            element.show();
+            reloadUiData(false, !submitted);
+            renderedNetworksUi.focus();
+            screen.render();
+          });
+        },
+      );
     },
   });
 
@@ -115,14 +131,19 @@ export async function initialize() {
     screen.children.forEach((element) => {
       element.hide();
     });
-    connectWifi(screen, "", "unknown", (submitted) => {
-      screen.children.forEach((element) => {
-        element.show();
-        reloadUiData(false, !submitted);
-        renderedNetworksUi.focus();
-        screen.render();
-      });
-    });
+    connectWifi(
+      screen,
+      "",
+      "unknown",
+      /** @type {(submitted: boolean) => void} */ (submitted) => {
+        screen.children.forEach((element) => {
+          element.show();
+          reloadUiData(false, !submitted);
+          renderedNetworksUi.focus();
+          screen.render();
+        });
+      },
+    );
   });
 
   // Turn off wifi power
@@ -167,6 +188,7 @@ export async function initialize() {
   // Run a timer for ui updates
   // updateTimer(15); // Disabled for now, maybe a keybind to start autoscan?
 
+  /** @type {(seconds: number) => void} */
   function updateTimer(seconds) {
     setTimeout(() => {
       reloadUiData();
@@ -175,6 +197,7 @@ export async function initialize() {
   }
 
   // Private functions
+  /** @type {(rescan?: boolean, noScan?: boolean) => Promise<NetworkLists>} */
   async function reloadUiData(rescan, noScan) {
     saveRowPositions([renderedNetworksUi, renderedKnownNetworksUi]);
 
@@ -191,7 +214,7 @@ export async function initialize() {
     checkActiveConnection();
 
     if (noScan) {
-      return {};
+      return { allNetworks: [], knownNetworks: [] };
     }
 
     // Scan for networks
@@ -199,10 +222,11 @@ export async function initialize() {
       const networks = await scanNetworks(rescan);
       return networks;
     } catch (err) {
-      return {};
+      return { allNetworks: [], knownNetworks: [] };
     }
   }
 
+  /** @type {(element: BlessedElement) => void} */
   function registerKnownNetworkActions(element) {
     element.key(["d"], async function (ch, key) {
       const index = element.selected;
@@ -226,13 +250,14 @@ export async function initialize() {
             break;
           }
         }
+        return;
       } catch (err) {
         reloadUiData();
       }
     });
   }
 
-  /** @type {(delay: number) => Promise<>} */
+  /** @type {(delay: number) => Promise<NetworkLists>} */
   async function scan(delay) {
     const connectingMessage = messageUi(screen, {
       top: screen.height - 1,

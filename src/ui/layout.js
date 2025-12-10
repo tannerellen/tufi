@@ -7,7 +7,7 @@ import reblessed from "../../external-dependencies/reblessed";
 /** @type {Reblessed} */
 const blessed = /** @type{any} */ (reblessed);
 
-/** @type {(options: {[key: string]: string}) => BlessedElement} */
+/** @type {(options: {[key: string]: any}) => BlessedElement} */
 export function containerBox(options) {
   const box = blessed.box({
     top: options?.top ?? 1,

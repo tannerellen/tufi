@@ -2,6 +2,7 @@ import reblessed from "../external-dependencies/reblessed";
 
 /**
  * @typedef {import('../types/blessed.d.ts').Reblessed} Reblessed
+ * @typedef {import('../types/blessed.d.ts').BlessedElement} BlessedElement
  * @typedef {import('../types/blessed.d.ts').Screen} Screen
  */
 

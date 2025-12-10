@@ -6,7 +6,7 @@ import { getScreen } from "./screen";
 
 let rowStates = new Map();
 
-/** @type {(focusableElements: [{[key: string]: any}]) => void} */
+/** @type {(focusableElements: BlessedElement[]) => void} */
 export function saveRowPositions(focusableElements) {
   focusableElements.forEach((element, index) => {
     // Set default current row for list type items
@@ -50,7 +50,7 @@ export function getRowState(element) {
   return rowStates.get(element);
 }
 
-/** @type {(container: BlessedElement, focusableElements: BlessedElement[], onEnter: Function, onEscape: Function) => void} */
+/** @type {(container: BlessedElement, focusableElements: BlessedElement[], onEnter?: Function, onEscape?: Function) => void} */
 export function registerNavigation(
   container,
   focusableElements,

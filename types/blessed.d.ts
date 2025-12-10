@@ -1,16 +1,16 @@
-export type Screen = {
-  render: () => void;
-  key: OnKey;
-  append: (BlessedElement) => void;
-};
+export type Screen = BlessedElement;
 
 export type BlessedElement = {
   name: string;
   type: string;
   selected: number;
   children: BlessedElement[];
+  rows: string[][];
+  render: () => void;
   destroy: () => void;
   focus: () => void;
+  show: () => void;
+  hide: () => void;
   setData: (listData: string[][]) => void;
   select: (index: number) => void;
   append: (container: BlessedElement) => void;
