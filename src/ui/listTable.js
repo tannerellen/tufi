@@ -1,9 +1,19 @@
-import blessed from "../../external-dependencies/reblessed";
+import reblessed from "../../external-dependencies/reblessed";
 import { getScreen } from "../screen";
 
+/**
+ * @typedef {import('../../types/blessed.d.ts').Reblessed} Reblessed
+ * @typedef {import('../../types/blessed.d.ts').BlessedElement} BlessedElement
+ * */
+
+/** @type {Reblessed} */
+const blessed = /** @type{any} */ (reblessed);
+
+/** @type {(container: BlessedElement, options: {[key: string]: any}) => BlessedElement} */
 export function listUi(container, options) {
   const screen = getScreen();
   // Create ListTable
+  /** @type {BlessedElement} */
   const list = blessed.listtable({
     parent: container,
     name: options?.name ?? "",
@@ -70,24 +80,35 @@ export function listUi(container, options) {
   list.on("focus", () => {
     list.style.cell.selected.bg = options?.readOnly ? "" : "yellow";
     container.style.border.fg = "green"; // Change border color when focused
-    container.children.find((child) => {
-      return child.name === "title";
-    }).style.fg = "green";
+    const titleElement = container.children.find(
+      (/** @type {BlessedElement} */ child) => {
+        return child.name === "title";
+      },
+    );
+    if (titleElement) {
+      titleElement.style.fg = "green";
+    }
     screen.render();
   });
 
   list.on("blur", () => {
     list.style.cell.selected.bg = options?.readOnly ? "" : "gray";
     container.style.border.fg = ""; // Reset border color when blurred
-    container.children.find((child) => {
-      return child.name === "title";
-    }).style.fg = "";
+    const titleElement = container.children.find(
+      (/** @type {BlessedElement} */ child) => {
+        return child.name === "title";
+      },
+    );
+    if (titleElement) {
+      titleElement.style.fg = "";
+    }
     screen.render();
   });
 
   return list;
 }
 
+/** @type {(ui: BlessedElement, listArray: any[], headerDictionary: {label: string, key: string}[]) => void} */
 export function listUpdate(ui, listArray, headerDictionary) {
   const listData = [];
   const header = headerDictionary.map((headerItem) => {

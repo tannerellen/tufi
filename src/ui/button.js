@@ -1,5 +1,13 @@
-import blessed from "../../external-dependencies/reblessed";
+import reblessed from "../../external-dependencies/reblessed";
+/**
+ * @typedef {import('../../types/blessed.d.ts').Reblessed} Reblessed
+ * @typedef {import('../..//types/blessed.d.ts').BlessedElement} BlessedElement
+ * */
 
+/** @type {Reblessed} */
+const blessed = /** @type{any} */ (reblessed);
+
+/** @type {(container: BlessedElement, options: {[key: string]: string}) => BlessedElement} */
 export function buttonUi(container, options) {
   const color = options?.color ?? "green";
   const button = blessed.button({

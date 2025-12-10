@@ -1,8 +1,18 @@
-import blessed from "../../external-dependencies/reblessed";
+import reblessed from "../../external-dependencies/reblessed";
 import { startLoader } from "./loading";
 
+/**
+ * @typedef {import('../../types/blessed.d.ts').Reblessed} Reblessed
+ * @typedef {import('../../types/blessed.d.ts').BlessedElement} BlessedElement
+ * */
+
+/** @type {Reblessed} */
+const blessed = /** @type{any} */ (reblessed);
+
+/** @type {(container: BlessedElement, options: {[key: string]: any}) => BlessedElement} */
 export function messageUi(container, options) {
   const color = options?.color ?? "blue";
+  /** @type {{[key: string]: any}} */
   const boxConfig = {
     parent: container,
     name: options?.name ?? "",
@@ -34,6 +44,8 @@ export function messageUi(container, options) {
   if (options.hasOwnProperty("width")) {
     boxConfig.width = options.width;
   }
+
+  /** @type {BlessedElement} */
   const message = blessed.box(boxConfig);
 
   if (options?.loader) {

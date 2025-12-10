@@ -1,5 +1,13 @@
-import blessed from "../../external-dependencies/reblessed";
+import reblessed from "../../external-dependencies/reblessed";
 import { getScreen } from "../screen";
+
+/**
+ * @typedef {import('../../types/blessed.d.ts').Reblessed} Reblessed
+ * @typedef {import('../../types/blessed.d.ts').BlessedElement} BlessedElement
+ * */
+
+/** @type {Reblessed} */
+const blessed = /** @type{any} */ (reblessed);
 
 const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const totalFrames = frames.length;
@@ -7,6 +15,7 @@ const totalFrames = frames.length;
 const fps = 15;
 const frameTime = 1000 / fps;
 
+/** @type {(container: BlessedElement, message?: string) => () => void} */
 export function startLoader(container, message) {
   const screen = getScreen();
 
@@ -16,6 +25,7 @@ export function startLoader(container, message) {
   container.append(animationContainer);
 
   let currentFrame = 0;
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
   let animationTimeout;
 
   // Start the animation loop
@@ -49,6 +59,7 @@ export function startLoader(container, message) {
   }
 }
 
+/** @type {(fgColor?: string, bgColor?: string) => BlessedElement} */
 function createElement(fgColor, bgColor) {
   const style = {};
   if (fgColor) {

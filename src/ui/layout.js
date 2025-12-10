@@ -1,5 +1,13 @@
-import blessed from "../../external-dependencies/reblessed";
+import reblessed from "../../external-dependencies/reblessed";
+/**
+ * @typedef {import('../../types/blessed.d.ts').Reblessed} Reblessed
+ * @typedef {import('../../types/blessed.d.ts').BlessedElement} BlessedElement
+ * */
 
+/** @type {Reblessed} */
+const blessed = /** @type{any} */ (reblessed);
+
+/** @type {(options: {[key: string]: string}) => BlessedElement} */
 export function containerBox(options) {
   const box = blessed.box({
     top: options?.top ?? 1,
@@ -35,7 +43,7 @@ export function containerBox(options) {
   });
   box.on("click", () => {
     const children = box.children;
-    const focusChild = children.find((child) => {
+    const focusChild = children.find((/** @type {BlessedElement} */ child) => {
       return child.name.includes("focus-");
     });
     if (focusChild) {
