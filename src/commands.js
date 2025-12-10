@@ -1,6 +1,7 @@
 /**
  * @typedef {import('../types/types').StringKeyedObject} StringKeyedObject
  * @typedef {import('../types/types').FieldMap} FieldMap
+ * @typedef {import('../types/types').DeviceLink} DeviceLink
  * */
 
 /** @type {() => Promise<string>} */
@@ -55,22 +56,26 @@ export async function getDeviceDetail(iface) {
   }
 }
 
-/** @type {() => Promise<StringKeyedObject>} */
+/** @type {() => Promise<DeviceLink>} */
 export async function getDeviceLink() {
   const iface = await getWifiInterface();
   const link = await runCommand(["iw", "dev", iface, "link"]);
 
+  /** @type {FieldMap} */
   const dictionary = new Map();
   dictionary.set("SSID", { name: "ssid", type: "string" });
   dictionary.set("freq", { name: "frequency", type: "number" });
-  dictionary.set("rx bitrate", { name: "rate", type: "string" });
+  dictionary.set("rx bitrate", { name: "bitrate", type: "string" });
 
-  const deviceLink = processCommandOutput(link, dictionary, ": ");
+  const deviceLink =
+    /** @type {{ssid: string, frequency: number, bitrate: string, rate: number, channelWidth: string, band: string, channel: number}} */ (
+      processCommandOutput(link, dictionary, ": ")
+    );
   // Fix rate value
   if (Object.keys(deviceLink).length) {
-    const [rate, measure, width] = deviceLink.rate.split(" ");
-    deviceLink.rate = parseFloat(rate || 0);
-    deviceLink.channelWidth = width?.replace("M", " M");
+    const [rate, measure, width] = deviceLink.bitrate.split(" ");
+    deviceLink.rate = parseFloat(rate) || 0;
+    deviceLink.channelWidth = width?.replace("M", " M") || "";
     deviceLink.band = getBand(deviceLink.frequency);
     deviceLink.channel = calculateChannel(deviceLink.frequency);
   }
@@ -115,15 +120,15 @@ export async function getConnections() {
       iface,
     ]);
     /** @type {FieldMap} */
-    const dictionary = new Map();
-    dictionary.set("IN-USE", { name: "connected", type: "boolean" });
-    dictionary.set("SSID", { name: "ssid", type: "string" });
-    dictionary.set("MODE", { name: "mode", type: "string" });
-    dictionary.set("CHAN", { name: "channel", type: "number" });
-    dictionary.set("RATE", { name: "rate", type: "string" });
-    dictionary.set("SIGNAL", { name: "signal", type: "number" });
-    dictionary.set("BARS", { name: "bars", type: "string" });
-    dictionary.set("SECURITY", { name: "security", type: "string" });
+    const fieldMap = new Map();
+    fieldMap.set("IN-USE", { name: "connected", type: "boolean" });
+    fieldMap.set("SSID", { name: "ssid", type: "string" });
+    fieldMap.set("MODE", { name: "mode", type: "string" });
+    fieldMap.set("CHAN", { name: "channel", type: "number" });
+    fieldMap.set("RATE", { name: "rate", type: "string" });
+    fieldMap.set("SIGNAL", { name: "signal", type: "number" });
+    fieldMap.set("BARS", { name: "bars", type: "string" });
+    fieldMap.set("SECURITY", { name: "security", type: "string" });
     const connectionsLines = connectionsOutput.trim().split("\n");
     /** @type {StringKeyedObject[]} */
     const connections = [];
@@ -135,16 +140,18 @@ export async function getConnections() {
       }
       const parts = line.split(".")[1].split(":");
       const [property, value] = parts;
-      if (!dictionary.has(property)) {
+      if (!fieldMap.has(property)) {
         continue;
       }
       if (!connection || property === "IN-USE") {
         connection = {};
       }
-      connection[dictionary.get(property).name] = stringToType(
-        value,
-        dictionary.get(property).type,
-      );
+
+      const field = fieldMap.get(property);
+      if (field) {
+        connection[field.name] = stringToType(value, field.type);
+      }
+
       if (property === "SECURITY") {
         connections.push(connection);
       }
@@ -322,16 +329,19 @@ export async function isWifiEnabled() {
 }
 
 // util functions
-/** @type {(value: string, type: 'string' | 'number' | 'boolean') => string | number | boolean} */
+/**
+ * @type {(value: string, type: 'string' | 'number' | 'boolean') => string | number | boolean}
+ */
 function stringToType(value, type) {
   if (type === "number") {
     return Number(value);
   } else if (type === "boolean") {
-    return value?.trim() && value !== "false";
+    return Boolean(value?.trim() && value !== "false");
   } else {
     return value;
   }
 }
+
 /** @typedef {{name: string, type: 'string' | 'number' | 'boolean'}} Label */
 /** @type {(input: string, separator: string, labels: Label[]) => {[key: string]: string | number | boolean}} */
 function objectFromString(input, separator, labels) {
@@ -406,7 +416,7 @@ function getBand(frequency) {
   return "Unknown";
 }
 
-/** @type {(commandOutput: string, fieldMap: FieldMap, fieldSeperator: string) => {[key: string]: any}} */
+/** @type {(commandOutput: string, fieldMap: FieldMap, fieldSeperator: string) => {[key: string]: string | number | boolean}} */
 function processCommandOutput(commandOutput, fieldMap, fieldSeperator) {
   /** @type {{[key: string]: string | number | boolean}} */
   const result = {};
@@ -414,13 +424,15 @@ function processCommandOutput(commandOutput, fieldMap, fieldSeperator) {
   for (const line of lines) {
     const parts = line.trim().split(fieldSeperator);
     const [property, value] = parts;
+
     if (!fieldMap.has(property)) {
       continue;
     }
-    result[fieldMap.get(property).name] = stringToType(
-      value,
-      fieldMap.get(property).type,
-    );
+
+    const field = fieldMap.get(property);
+    if (field) {
+      result[field.name] = stringToType(value, field.type);
+    }
   }
   return result;
 }

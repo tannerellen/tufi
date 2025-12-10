@@ -3,16 +3,23 @@ import { getDeviceLink, stationDump } from "../commands";
 import { listUpdate } from "../ui/listTable";
 import { asyncTimeout } from "../utils/utils";
 
+/** * @typedef {import('../../types/blessed.d.ts').BlessedElement} BlessedElement */
+/** * @typedef {import('../../types/types.d.ts').DeviceLink} DeviceLink */
+
+/** @type {BlessedElement} */
 let connectionUi;
 
+/** @type {(renderedConnectionUi: BlessedElement) => void} */
 export function registerConnectionUi(renderedConnectionUi) {
   connectionUi = renderedConnectionUi;
 }
 
+/** @type {() => Promise<void>} */
 export async function checkActiveConnection() {
   try {
     // Get connection info
-    let activeConnection;
+    /** @type {Array<{[key: string]: string}>} */
+    let activeConnection = [];
     // The data isn't always updated in the drive so start a loop watching for
     // a bit if the data changes. Don't continue the loop though after many iterations
     for (let i = 0; i < 20; i++) {
@@ -20,6 +27,7 @@ export async function checkActiveConnection() {
       const waitingForData =
         Object.keys(deviceLink).length &&
         (!deviceLink?.channelWidth || deviceLink?.rate < 100);
+
       activeConnection = Object.keys(deviceLink).length
         ? [mutateConnectionEntry(deviceLink)]
         : [];
@@ -30,7 +38,6 @@ export async function checkActiveConnection() {
         // Update the view with any partial info we have
         updateActiveConnection(activeConnection);
         // Try to trigger a device data update
-        // Ping to 127.0.0.1 may also serve the same purpose to force driver data update
         await stationDump();
       }
       await asyncTimeout(500);
@@ -43,6 +50,7 @@ export async function checkActiveConnection() {
   }
 }
 
+/** @type {(activeConnection: {[key: string]: string}[]) => Promise<void>} */
 async function updateActiveConnection(activeConnection) {
   const screen = getScreen();
   listUpdate(connectionUi, activeConnection, [
@@ -64,13 +72,21 @@ export async function removeActiveConnection() {
   }
 }
 
-function mutateConnectionEntry(connection) {
-  const connectionClone = { ...connection };
-  if (!connectionClone.channelWidth) {
-    connectionClone.channelWidth = "--";
-    connectionClone.rate = "--";
-  } else {
-    connectionClone.rate = `${Math.round(parseInt(connectionClone.rate))} Mb/s`;
+/** @type {(deviceLink: DeviceLink) => {[key:string]: string}} */
+function mutateConnectionEntry(deviceLink) {
+  /** @type {{[key: string]: string}} */
+  const connection = {};
+
+  for (const property in deviceLink) {
+    const key = /** @type {keyof DeviceLink} */ (property);
+    connection[property] = String(deviceLink[key]);
   }
-  return connectionClone;
+
+  if (!connection.channelWidth) {
+    connection.channelWidth = "--";
+    connection.rate = "--";
+  } else {
+    connection.rate = `${Math.round(Number(deviceLink.rate))} Mb/s`;
+  }
+  return connection;
 }
