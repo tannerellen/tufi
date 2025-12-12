@@ -23,7 +23,7 @@ export async function togglePower() {
     const isEnabled = await isWifiEnabled();
     const newState = isEnabled ? "off" : "on";
     const message = messageUi(screen, {
-      top: screen.height - 1,
+      top: /** @type {number} */ (screen.height) - 1,
       left: 0,
       right: 0,
       height: "shrink",

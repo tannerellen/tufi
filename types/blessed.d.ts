@@ -9,6 +9,8 @@ export type BlessedElement = {
   render: () => void;
   destroy: () => void;
   focus: () => void;
+  focusNext: () => void;
+  submit: () => void;
   show: () => void;
   hide: () => void;
   setData: (listData: string[][]) => void;
@@ -16,22 +18,25 @@ export type BlessedElement = {
   append: (container: BlessedElement) => void;
   emit: (type: string, listElement: BlessedElement, index: number) => void;
   on(event: "click", callback: () => void): void;
+  on(event: "press", callback: () => void): void;
   on(event: "focus", callback: () => void): void;
   on(
     event: "select",
     callback: (item: BlessedElement, index: number) => void,
   ): void;
+  on(event: "submit", callback: () => void): void;
+  on(event: "cancel", callback: () => void): void;
   on(event: "blur", callback: () => void): void;
   on(event: "destroy", callback: () => void): void;
   key: (keys: string[], callback: (ch: string, key: string) => void) => void;
   items: BlessedElement[];
   content?: string;
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
-  height: number;
-  width: number;
+  top: number | string;
+  right: number | string;
+  bottom: number | string;
+  left: number | string;
+  height: number | string;
+  width: number | string;
   style: any;
 };
 

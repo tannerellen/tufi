@@ -6,8 +6,14 @@ import { buttonUi } from "../ui/button.js";
 import { messageUi } from "../ui/message.js";
 import { registerNavigation } from "../navigation.js";
 
+/** @typedef {import('../../types/blessed.d.ts').BlessedElement} BlessedElement */
+/** @typedef {{password?: string, ssid?: string}} FormData */
+
+/** @type {(container: BlessedElement, ssid: string, security: string, onDestroy: Function) => void} */
 export function connectWifi(container, ssid, security, onDestroy) {
   const screen = getScreen();
+
+  /** @type {BlessedElement} */
   let errorMessage;
   let top = 0;
 
@@ -19,6 +25,7 @@ export function connectWifi(container, ssid, security, onDestroy) {
     height: ssid ? 13 : 17,
   });
 
+  /** @type {BlessedElement=} */
   let ssidInput;
   if (!ssid) {
     top = top + 2;
@@ -71,7 +78,7 @@ export function connectWifi(container, ssid, security, onDestroy) {
   registerNavigation(
     form,
     focusableElements,
-    (element) => {
+    (/** @type {BlessedElement} */ element) => {
       if (element === cancelButton) {
         destroy();
       } else {
@@ -84,14 +91,14 @@ export function connectWifi(container, ssid, security, onDestroy) {
   );
 
   // Handle form submission
-  form.on("submit", async (data) => {
+  form.on("submit", async (/** @type {FormData} */ data) => {
     if (errorMessage) {
       errorMessage.destroy();
     }
     connectButton.hide();
     cancelButton.hide();
     const connectingMessage = messageUi(form, {
-      top: connectButton.top - 2,
+      top: /** @type {number} */ (connectButton.top) - 2,
       left: 0,
       right: 0,
       height: "shrink",
@@ -101,21 +108,24 @@ export function connectWifi(container, ssid, security, onDestroy) {
     screen.render();
     try {
       const connection = await connectToNetwork(
-        !!ssidInput ? data.ssid : ssid,
+        !!ssidInput ? data.ssid || "" : ssid,
         data.password,
         !!ssidInput,
       );
       destroy(true);
     } catch (err) {
+      const error = /** @type {Error} */ (err);
       connectingMessage.destroy();
       connectButton.show();
       cancelButton.show();
       errorMessage = messageUi(screen, {
-        top: form.top + form.height,
+        top:
+          /** @type {number} */ (form.top) +
+          /** @type {number} */ (form.height),
         left: form.left,
         width: form.width,
         height: "shrink",
-        content: err.message,
+        content: error.message,
       });
       passwordInput.focus();
       screen.render();
@@ -128,6 +138,7 @@ export function connectWifi(container, ssid, security, onDestroy) {
     destroy();
   });
 
+  /** @type {(submitted?: boolean) => void} */
   function destroy(submitted) {
     if (errorMessage) {
       errorMessage.destroy();

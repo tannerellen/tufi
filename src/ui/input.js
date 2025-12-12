@@ -7,7 +7,7 @@ import reblessed from "../../external-dependencies/reblessed";
 /** @type {Reblessed} */
 const blessed = /** @type{any} */ (reblessed);
 
-/** @type {(container: BlessedElement, options: {[key: string]: string}) => BlessedElement} */
+/** @type {(container: BlessedElement, options: {[key: string]: any}) => BlessedElement} */
 export function inputUi(container, options) {
   // Add password label
   const inputLabel = blessed.text({

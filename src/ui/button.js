@@ -7,7 +7,7 @@ import reblessed from "../../external-dependencies/reblessed";
 /** @type {Reblessed} */
 const blessed = /** @type{any} */ (reblessed);
 
-/** @type {(container: BlessedElement, options: {[key: string]: string}) => BlessedElement} */
+/** @type {(container: BlessedElement, options: {[key: string]: any}) => BlessedElement} */
 export function buttonUi(container, options) {
   const color = options?.color ?? "green";
   const button = blessed.button({
