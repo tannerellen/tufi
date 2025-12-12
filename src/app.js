@@ -56,7 +56,9 @@ export async function initialize() {
   // known networks
   const knownNetworksContainer = containerBox({
     title: "Known Networks",
-    top: deviceContainer.height + connectionContainer.height,
+    top:
+      /** @type {number} */ (deviceContainer.height) +
+      /** @type {number} */ (connectionContainer.height),
     height: 10,
   });
   screen.append(knownNetworksContainer);
@@ -79,9 +81,9 @@ export async function initialize() {
   const allNetworksContainer = containerBox({
     title: "New Networks",
     top:
-      deviceContainer.height +
-      connectionContainer.height +
-      knownNetworksContainer.height,
+      /** @type {number} */ (deviceContainer.height) +
+      /** @type {number} */ (connectionContainer.height) +
+      /** @type {number} */ (knownNetworksContainer.height),
     height: "shrink",
   });
   screen.append(allNetworksContainer);
@@ -153,13 +155,17 @@ export async function initialize() {
       await reloadUiData(); // Quickly update the ui regardless if we have networks
       if (isEnabled) {
         for (let i = 0; i < 30; i++) {
-          const networks = await scan(500);
+          const networks = await scan(500, true);
           if (networks.knownNetworks.length) {
             if (
               networks.knownNetworks.find((network) => {
                 return !!network.connected;
               })
             ) {
+              break;
+            } else {
+              // If we have networks but no connection just try one more type
+              await scan(500, true);
               break;
             }
           } else if (networks.allNetworks.length) {
@@ -257,10 +263,10 @@ export async function initialize() {
     });
   }
 
-  /** @type {(delay: number) => Promise<NetworkLists>} */
-  async function scan(delay) {
+  /** @type {(delay: number, noRescan?: boolean) => Promise<NetworkLists>} */
+  async function scan(delay, noRescan) {
     const connectingMessage = messageUi(screen, {
-      top: screen.height - 1,
+      top: /** @type {number} */ (screen.height) - 1,
       left: 0,
       right: 0,
       height: "shrink",
@@ -271,7 +277,7 @@ export async function initialize() {
     if (delay) {
       await asyncTimeout(delay);
     }
-    const networks = await reloadUiData(true);
+    const networks = await reloadUiData(!noRescan);
     connectingMessage.destroy();
     screen.render();
     return networks;
