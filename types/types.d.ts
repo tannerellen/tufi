@@ -24,9 +24,21 @@ export type Network = {
   connected?: boolean;
 };
 
+export type KnownNetwork = {
+  ssid: string;
+  type: string;
+};
+
+export type NetworkDisplay = {
+  ssid: string;
+  security: string;
+  signal: string;
+  connected?: string;
+};
+
 export type NetworkLists = {
-  allNetworks: Network[];
-  knownNetworks: Network[];
+  allNetworks: NetworkDisplay[];
+  knownNetworks: NetworkDisplay[];
 };
 
 export type ListTableDataItem = {

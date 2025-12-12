@@ -2,6 +2,8 @@
  * @typedef {import('../types/types').StringKeyedObject} StringKeyedObject
  * @typedef {import('../types/types').FieldMap} FieldMap
  * @typedef {import('../types/types').DeviceLink} DeviceLink
+ * @typedef {import('../types/types').Network} Network
+ * @typedef {import('../types/types').KnownNetwork} KnownNetwork
  * */
 
 /** @type {() => Promise<string>} */
@@ -201,7 +203,7 @@ export async function getStationInfo() {
   }
 }
 
-/** @type {(rescan?: boolean) => Promise<{StringKeyedObject[]>} */
+/** @type {(rescan?: boolean) => Promise<Network[]>} */
 export async function getWifiList(rescan) {
   const command = [
     "nmcli",
@@ -221,20 +223,22 @@ export async function getWifiList(rescan) {
   try {
     const wifiList = await runCommand(command);
 
-    return arrayFromList(wifiList, (line) => {
-      return objectFromString(line, ":", [
-        { name: "ssid", type: "string" },
-        { name: "security", type: "string" },
-        { name: "signal", type: "number" },
-        { name: "connected", type: "boolean" },
-      ]);
-    });
+    return /** @type {Network[]} */ (
+      arrayFromList(wifiList, (line) => {
+        return objectFromString(line, ":", [
+          { name: "ssid", type: "string" },
+          { name: "security", type: "string" },
+          { name: "signal", type: "number" },
+          { name: "connected", type: "boolean" },
+        ]);
+      })
+    );
   } catch (err) {
     throw err;
   }
 }
 
-/** @type {() => Promise<StringKeyedObject[]>} */
+/** @type {() => Promise<KnownNetwork[]>} */
 export async function getKnownNetworks() {
   try {
     const networks = await runCommand([
@@ -245,7 +249,7 @@ export async function getKnownNetworks() {
       "connection",
       "show",
     ]);
-    return /** @type {StringKeyedObject[]} */ (
+    return /** @type {KnownNetwork[]} */ (
       arrayFromList(networks, (network) => {
         return objectFromString(network, ":", [
           { name: "ssid", type: "string" },
@@ -277,7 +281,7 @@ async function getActiveConnectionTypes() {
 }
 
 // connect functions
-/** @type {(ssid: string, password: string, hidden: boolean) => Promise<string>} */
+/** @type {(ssid: string, password?: string, hidden?: boolean) => Promise<string>} */
 export async function connectToNetwork(ssid, password, hidden) {
   const cmd = ["nmcli", "device", "wifi", "connect", ssid];
   if (password) {

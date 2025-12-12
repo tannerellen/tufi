@@ -12,15 +12,27 @@ import { restoreRowPositions } from "../navigation";
 import { messageUi } from "../ui/message";
 import { asyncTimeout } from "../utils/utils";
 
+/** @typedef {import('../../types/blessed.d.ts').BlessedElement} BlessedElement */
+/** @typedef {import('../../types/types.d.ts').Network} Network */
+/** @typedef {import('../../types/types.d.ts').KnownNetwork} KnownNetwork */
+/** @typedef {import('../../types/types.d.ts').NetworkDisplay} NetworkDisplay */
+/** @typedef {import('../../types/types.d.ts').NetworkLists} NetworkLists */
+/** @typedef {[Network[], KnownNetwork[]]} RawNetworkLists */
+
+/** @type {RawNetworkLists} */
 let rawLists;
+/** @type {BlessedElement} */
 let knownNetworksUi;
+/** @type {BlessedElement} */
 let networksUi;
 
+/** @type {(renderedKnownNetworksUi: BlessedElement, renderedNetworksUi: BlessedElement) => void} */
 export function registerNetworkUi(renderedKnownNetworksUi, renderedNetworksUi) {
   knownNetworksUi = renderedKnownNetworksUi;
   networksUi = renderedNetworksUi;
 }
 
+/** @type {(rescan?: boolean) => Promise<NetworkLists>} */
 export function scanNetworks(rescan) {
   return new Promise((resolve, reject) => {
     generateNetworkLists(rescan)
@@ -34,6 +46,7 @@ export function scanNetworks(rescan) {
   });
 }
 
+/** @type {(networkLists: NetworkLists) => void} */
 function updateNetworkLists(networkLists) {
   const screen = getScreen();
   listUpdate(knownNetworksUi, networkLists.knownNetworks, [
@@ -51,15 +64,16 @@ function updateNetworkLists(networkLists) {
   screen.render();
 }
 
+/** @type {(rescan?: boolean) => Promise<NetworkLists>} */
 function generateNetworkLists(rescan) {
   return new Promise((resolve, reject) => {
+    /** @type {[Promise<Network[]>, Promise<KnownNetwork[]>]} */
     const promises = [getWifiList(rescan), getKnownNetworks()];
 
     Promise.all(promises)
       .then((result) => {
         const [allNetworks, knownNetworks] = result;
         rawLists = result;
-
         resolve(buildNetworkLists(allNetworks, knownNetworks));
       })
       .catch((err) => {
@@ -68,6 +82,7 @@ function generateNetworkLists(rescan) {
   });
 }
 
+/** @type {(ssid: string, connected: boolean) => Promise<void>} */
 export async function toggleWifiConnection(ssid, connected) {
   const screen = getScreen();
   const messageContent = connected
@@ -91,11 +106,13 @@ export async function toggleWifiConnection(ssid, connected) {
   screen.render();
 }
 
+/** @type {() => NetworkLists} */
 export function getNetworkLists() {
   const [allNetworks, knownNetworks] = rawLists;
   return buildNetworkLists(allNetworks, knownNetworks);
 }
 
+/** @type {(ssid: string) => Promise<void>} */
 export async function deleteNetwork(ssid) {
   try {
     await deleteNetworkConnection(ssid);
@@ -110,6 +127,7 @@ export async function deleteNetwork(ssid) {
   }
 }
 
+/** @type {(ssid: string) => void} */
 function removeFromKnownNetworks(ssid) {
   const knownNetworks = rawLists[1];
   for (let i = 0; i < knownNetworks.length; i++) {
@@ -120,6 +138,7 @@ function removeFromKnownNetworks(ssid) {
   }
 }
 
+/** @type {(allNetworks: Network[], knownNetworks: KnownNetwork[]) => NetworkLists} */
 function buildNetworkLists(allNetworks, knownNetworks) {
   const allNetworksUnique = [];
   const knownNetworksAvailable = [];
@@ -145,13 +164,16 @@ function buildNetworkLists(allNetworks, knownNetworks) {
   };
 }
 
+/** @type {(network: Network) => NetworkDisplay} */
 function mutateNetworkEntry(network) {
-  const networkClone = { ...network };
+  /** @type {NetworkDisplay} */
+  const networkClone = /** @type {any} */ ({ ...network });
   networkClone.connected = network.connected ? "✔" : "";
   networkClone.signal = network.signal.toString() + "%";
   return networkClone;
 }
 
+/** @type {(networks: Network[]) => Network[]} */
 function deDuplicateNetworks(networks) {
   const networkMap = new Map();
   for (const network of networks) {
