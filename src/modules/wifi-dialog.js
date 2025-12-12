@@ -132,6 +132,12 @@ export function connectWifi(container, ssid, security, onDestroy) {
     }
   });
 
+  // Handle connect button
+  connectButton.on("press", () => {
+    // Submit form
+    form.submit();
+  });
+
   // Handle cancel button
   cancelButton.on("press", () => {
     // Clear form

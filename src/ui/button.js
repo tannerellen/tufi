@@ -21,14 +21,11 @@ export function buttonUi(container, options) {
     height: 1,
     style: {
       bg: color,
-      fg: "",
       focus: {
         bg: `light${color}`,
-        fg: "",
       },
       hover: {
         bg: `light${color}`,
-        fg: "",
       },
     },
     mouse: true,
