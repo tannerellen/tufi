@@ -20,9 +20,9 @@ import { registerNavigation, saveRowPositions } from "./navigation";
 import { messageUi } from "./ui/message";
 import { startLoader } from "./ui/loading";
 
-/** * @typedef {import('../types/blessed.d.ts').BlessedElement} BlessedElement */
-/** * @typedef {import('../types/types.d.ts').NetworkLists} NetworkLists */
-/** * @typedef {import('../types/types.d.ts').Network} Network */
+/** @typedef {import('../types/blessed.d.ts').BlessedElement} BlessedElement */
+/** @typedef {import('../types/types.d.ts').NetworkLists} NetworkLists */
+/** @typedef {import('../types/types.d.ts').Network} Network */
 
 export async function initialize() {
   // create UI
