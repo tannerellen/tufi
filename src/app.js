@@ -57,7 +57,7 @@ export async function initialize() {
   const knownNetworksContainer = containerBox({
     title: "Known Networks",
     top:
-      /** @type {number} */ (deviceContainer.height) +
+      /** @type {number} */ (connectionContainer.top) +
       /** @type {number} */ (connectionContainer.height),
     height: 10,
   });
@@ -81,8 +81,7 @@ export async function initialize() {
   const allNetworksContainer = containerBox({
     title: "New Networks",
     top:
-      /** @type {number} */ (deviceContainer.height) +
-      /** @type {number} */ (connectionContainer.height) +
+      /** @type {number} */ (knownNetworksContainer.top) +
       /** @type {number} */ (knownNetworksContainer.height),
     height: "shrink",
   });
