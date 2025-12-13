@@ -9,8 +9,7 @@ const blessed = /** @type{any} */ (reblessed);
 
 /** @type {(options: {[key: string]: any}) => BlessedElement} */
 export function containerBox(options) {
-  const box = blessed.box({
-    top: options?.top ?? 1,
+  const config = {
     left: options?.left ?? 1,
     right: options?.right ?? 1,
     height: options?.height ?? 3,
@@ -26,7 +25,12 @@ export function containerBox(options) {
         },
       },
     },
-  });
+  };
+
+  if (options.top !== undefined && options.bottom !== undefined) {
+    delete config.height;
+  }
+  const box = blessed.box({ ...config, ...options });
 
   blessed.text({
     parent: box,

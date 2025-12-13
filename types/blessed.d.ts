@@ -13,6 +13,7 @@ export type BlessedElement = {
   submit: () => void;
   show: () => void;
   hide: () => void;
+  setContent: (content: string) => void;
   setData: (listData: string[][]) => void;
   select: (index: number) => void;
   append: (container: BlessedElement) => void;
@@ -48,4 +49,5 @@ export type Reblessed = {
   textbox: (options?: any) => BlessedElement;
   text: (options?: any) => BlessedElement;
   button: (options?: any) => BlessedElement;
+  parseTags: (content: string) => string;
 };

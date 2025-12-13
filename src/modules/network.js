@@ -89,7 +89,7 @@ export async function toggleWifiConnection(ssid, connected) {
     ? `Disconnecting from ${ssid}...`
     : `Connecting to ${ssid}...`;
   const message = messageUi(screen, {
-    top: screen.height - 1,
+    top: /** @type {number} */ (screen.height) - 1,
     left: 0,
     right: 0,
     height: "shrink",

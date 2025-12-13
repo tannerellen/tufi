@@ -1,6 +1,7 @@
 import { createScreen } from "./screen";
 import { asyncTimeout } from "./utils/utils";
 import { containerBox } from "./ui/layout";
+import { createHint, showHelp } from "./modules/hints";
 import { listUi, listUpdate } from "./ui/listTable";
 import { getDeviceList } from "./modules/device";
 import {
@@ -28,6 +29,10 @@ export async function initialize() {
   // create UI
   // create main screen object
   const screen = createScreen();
+
+  // hints
+  const hintContainer = createHint();
+  screen.append(hintContainer);
 
   // device
   const deviceContainer = containerBox({
@@ -83,7 +88,7 @@ export async function initialize() {
     top:
       /** @type {number} */ (knownNetworksContainer.top) +
       /** @type {number} */ (knownNetworksContainer.height),
-    height: "shrink",
+    bottom: hintContainer.height,
   });
   screen.append(allNetworksContainer);
   const renderedNetworksUi = listUi(allNetworksContainer, {
@@ -127,6 +132,10 @@ export async function initialize() {
   registerNavigation(screen, [renderedNetworksUi, renderedKnownNetworksUi]);
 
   // App level keys. Todo: Should these just be assigned to our network list elements?
+  screen.key(["?"], async (ch, key) => {
+    const help = showHelp();
+  });
+
   // Connect to hidden network
   screen.key(["h"], async (ch, key) => {
     screen.children.forEach((element) => {
@@ -191,8 +200,9 @@ export async function initialize() {
   loader();
 
   // Run a timer for ui updates
-  // updateTimer(15); // Disabled for now, maybe a keybind to start autoscan?
+  // updateTimer(15); //Todo: Disabled for now, maybe a keybind to start autoscan?
 
+  // Private functions
   /** @type {(seconds: number) => void} */
   function updateTimer(seconds) {
     setTimeout(() => {
@@ -201,7 +211,6 @@ export async function initialize() {
     }, 1000 * seconds);
   }
 
-  // Private functions
   /** @type {(rescan?: boolean, noScan?: boolean) => Promise<NetworkLists>} */
   async function reloadUiData(rescan, noScan) {
     saveRowPositions([renderedNetworksUi, renderedKnownNetworksUi]);
