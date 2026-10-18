@@ -2,7 +2,7 @@ import { getScreen } from "../screen";
 import {
   getWifiList,
   getKnownNetworks,
-  deleteNetworkConnection,
+  deleteConnection,
   activateConnection,
   disconnectFromNetwork,
 } from "../commands";
@@ -101,8 +101,13 @@ export async function toggleWifiConnection(ssid, connected) {
     if (connected) {
       await disconnectFromNetwork(ssid);
     } else {
-      // Known networks have a saved profile, activate it rather than creating a new one
-      await activateConnection(ssid);
+      // Known networks have a saved profile, activate it rather than creating
+      // a new one. If there are several, use the most recently used.
+      const [profile] = getProfilesForSsid(ssid);
+      if (!profile) {
+        throw new Error(`No saved profile found for ${ssid}`);
+      }
+      await activateConnection(profile.uuid);
     }
   } catch (err) {
     message.destroy();
@@ -137,29 +142,41 @@ export function getNetworkLists() {
   return buildNetworkLists(allNetworks, knownNetworks);
 }
 
-/** @type {(ssid: string) => Promise<void>} */
+/**
+ * Forget a network by deleting every saved profile that connects to its ssid
+ * @type {(ssid: string) => Promise<void>}
+ */
 export async function deleteNetwork(ssid) {
-  try {
-    await deleteNetworkConnection(ssid);
-    removeFromKnownNetworks(ssid);
-    await asyncTimeout(100); // Small delay to give state a chance to update
-    const [allNetworks, knownNetworks] = rawLists;
-    const networkLists = buildNetworkLists(allNetworks, knownNetworks);
-    updateNetworkLists(networkLists);
-    return;
-  } catch (err) {
-    throw err;
+  const profiles = getProfilesForSsid(ssid);
+  if (!profiles.length) {
+    throw new Error(`No saved profile found for ${ssid}`);
   }
+  for (const profile of profiles) {
+    await deleteConnection(profile.uuid);
+    removeFromKnownNetworks(profile.uuid);
+  }
+  await asyncTimeout(100); // Small delay to give state a chance to update
+  const [allNetworks, knownNetworks] = rawLists;
+  const networkLists = buildNetworkLists(allNetworks, knownNetworks);
+  updateNetworkLists(networkLists);
 }
 
-/** @type {(ssid: string) => void} */
-function removeFromKnownNetworks(ssid) {
+/**
+ * Saved profiles for an ssid, most recently used first
+ * @type {(ssid: string) => KnownNetwork[]}
+ */
+function getProfilesForSsid(ssid) {
+  return (rawLists?.[1] ?? [])
+    .filter((profile) => profile.ssid === ssid)
+    .sort((a, b) => b.timestamp - a.timestamp);
+}
+
+/** @type {(uuid: string) => void} */
+function removeFromKnownNetworks(uuid) {
   const knownNetworks = rawLists[1];
-  for (let i = 0; i < knownNetworks.length; i++) {
-    if (knownNetworks[i].ssid === ssid) {
-      knownNetworks.splice(i, 1);
-      return;
-    }
+  const index = knownNetworks.findIndex((profile) => profile.uuid === uuid);
+  if (index !== -1) {
+    knownNetworks.splice(index, 1);
   }
 }
 

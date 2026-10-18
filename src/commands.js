@@ -244,28 +244,63 @@ export async function getWifiList(rescan) {
   }
 }
 
-/** @type {() => Promise<KnownNetwork[]>} */
+/**
+ * Get saved wifi connection profiles along with the ssid each one connects to.
+ * The profile name is not necessarily the ssid (e.g. "MyNet 1" or a renamed profile).
+ * @type {() => Promise<KnownNetwork[]>}
+ */
 export async function getKnownNetworks() {
+  const output = await runCommand([
+    "nmcli",
+    "-t",
+    "-f",
+    "NAME,UUID,TYPE,TIMESTAMP",
+    "connection",
+    "show",
+  ]);
+
+  /** @type {KnownNetwork[]} */
+  const profiles = [];
+  for (const line of output.split("\n")) {
+    const [name, uuid, type, timestamp] = parseTerseLine(line);
+    if (type === "802-11-wireless" && uuid) {
+      // Default the ssid to the name until we look up the real one
+      profiles.push({ name, uuid, ssid: name, timestamp: Number(timestamp) || 0 });
+    }
+  }
+  if (!profiles.length) {
+    return profiles;
+  }
+
+  // Look up all ssids in a single call. Output is blocks of "uuid\nssid\n\n"
   try {
-    const networks = await runCommand([
+    const ssidOutput = await runCommand([
       "nmcli",
-      "-t",
-      "-f",
-      "NAME,TYPE",
+      "-e",
+      "no",
+      "-g",
+      "connection.uuid,802-11-wireless.ssid",
       "connection",
       "show",
+      ...profiles.flatMap((profile) => ["uuid", profile.uuid]),
     ]);
-    return /** @type {KnownNetwork[]} */ (
-      arrayFromList(networks, (network) => {
-        return objectFromTerseLine(network, [
-          { name: "ssid", type: "string" },
-          { name: "type", type: "string" },
-        ]);
-      })
-    );
+    /** @type {Map<string, string>} */
+    const ssidByUuid = new Map();
+    const lines = ssidOutput.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const uuid = lines[i];
+      if (/^[0-9a-f-]{36}$/i.test(uuid) && i + 1 < lines.length) {
+        ssidByUuid.set(uuid, lines[i + 1]);
+        i++;
+      }
+    }
+    for (const profile of profiles) {
+      profile.ssid = ssidByUuid.get(profile.uuid) || profile.ssid;
+    }
   } catch (err) {
-    throw err;
+    // Fall back to profile names as ssids
   }
+  return profiles;
 }
 
 /** @type {() => Promise<string[]>} */
@@ -449,10 +484,10 @@ export async function connectToEnterpriseNetwork({
 
 /**
  * Activate an existing saved connection profile
- * @type {(name: string) => Promise<string>}
+ * @type {(uuid: string) => Promise<string>}
  */
-export async function activateConnection(name) {
-  return await runCommand(["nmcli", "connection", "up", "id", name]);
+export async function activateConnection(uuid) {
+  return await runCommand(["nmcli", "connection", "up", "uuid", uuid]);
 }
 
 /** @type {() => Promise<string[]>} */
@@ -461,14 +496,9 @@ async function getConnectionUuids() {
   return output ? output.split("\n") : [];
 }
 
-/** @type {(ssid: string) => Promise<void>} */
-export async function deleteNetworkConnection(ssid) {
-  try {
-    await runCommand(["nmcli", "connection", "delete", "id", ssid]);
-    return;
-  } catch (err) {
-    throw err;
-  }
+/** @type {(uuid: string) => Promise<void>} */
+export async function deleteConnection(uuid) {
+  await runCommand(["nmcli", "connection", "delete", "uuid", uuid]);
 }
 
 /** @type {(ssid: string) => Promise<void>} */

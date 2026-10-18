@@ -25,8 +25,10 @@ export type Network = {
 };
 
 export type KnownNetwork = {
+  name: string;
+  uuid: string;
   ssid: string;
-  type: string;
+  timestamp: number;
 };
 
 export type NetworkDisplay = {
