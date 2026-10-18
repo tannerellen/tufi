@@ -25,7 +25,7 @@ export type BlessedElement = {
     event: "select",
     callback: (item: BlessedElement, index: number) => void,
   ): void;
-  on(event: "submit", callback: () => void): void;
+  on(event: "submit", callback: (data: any) => void): void;
   on(event: "cancel", callback: () => void): void;
   on(event: "blur", callback: () => void): void;
   on(event: "destroy", callback: () => void): void;

@@ -16,6 +16,8 @@ export function connectWifi(container, ssid, security, onDestroy) {
   /** @type {BlessedElement} */
   let errorMessage;
   let top = 0;
+  let submitting = false;
+  let destroyed = false;
 
   const showPassword = !!security;
   // Create a form box
@@ -79,9 +81,9 @@ export function connectWifi(container, ssid, security, onDestroy) {
     form,
     focusableElements,
     (/** @type {BlessedElement} */ element) => {
-      if (element === cancelButton) {
-        destroy();
-      } else {
+      // Buttons already handle enter through their press event, only submit
+      // from text inputs here to avoid submitting twice
+      if (element.type === "textbox") {
         form.submit();
       }
     },
@@ -90,8 +92,19 @@ export function connectWifi(container, ssid, security, onDestroy) {
     },
   );
 
+  // Keep the form's tab position in sync when focus is set directly (or by mouse)
+  focusableElements.forEach((element) => {
+    element.on("focus", () => {
+      /** @type {any} */ (form)._selected = element;
+    });
+  });
+
   // Handle form submission
   form.on("submit", async (/** @type {FormData} */ data) => {
+    if (submitting) {
+      return;
+    }
+    submitting = true;
     if (errorMessage) {
       errorMessage.destroy();
     }
@@ -115,6 +128,7 @@ export function connectWifi(container, ssid, security, onDestroy) {
       destroy(true);
     } catch (err) {
       const error = /** @type {Error} */ (err);
+      submitting = false;
       connectingMessage.destroy();
       connectButton.show();
       cancelButton.show();
@@ -146,6 +160,10 @@ export function connectWifi(container, ssid, security, onDestroy) {
 
   /** @type {(submitted?: boolean) => void} */
   function destroy(submitted) {
+    if (destroyed) {
+      return;
+    }
+    destroyed = true;
     if (errorMessage) {
       errorMessage.destroy();
     }
