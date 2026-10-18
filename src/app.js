@@ -17,6 +17,7 @@ import {
 } from "./modules/network";
 import { togglePower } from "./modules/device";
 import { connectWifi } from "./modules/wifi-dialog";
+import { showWifiQr } from "./modules/qr-dialog";
 import { registerNavigation, saveRowPositions } from "./navigation";
 import { messageUi } from "./ui/message";
 import { startLoader } from "./ui/loading";
@@ -189,6 +190,11 @@ export async function initialize() {
 
   screen.key(["s"], async function (ch, key) {
     await scan(500);
+  });
+
+  // Show QR code to share the active wifi network
+  screen.key(["w"], async function (ch, key) {
+    await showWifiQr();
   });
 
   registerKnownNetworkActions(renderedKnownNetworksUi);

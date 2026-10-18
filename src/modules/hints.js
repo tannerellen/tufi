@@ -13,7 +13,7 @@ const helpTextLines = [
   "tab: nav | k,: up | j,: down",
   "",
   "{bold}General{/bold}",
-  "s: scan | h: hidden | o: device on/off",
+  "s: scan | h: hidden | o: device on/off | w: share (QR)",
   "",
   "{bold}New Network{/bold}",
   "space or ↵: connect",
@@ -49,7 +49,7 @@ export function showHelp() {
   help = textBox({
     parent: screen,
     align: "right",
-    top: /** @type {number} */ (screen.height) / 2 - 10,
+    top: "center",
     left: 3,
     right: 3,
     height: 20,

@@ -4,6 +4,7 @@
  * @typedef {import('../types/types').DeviceLink} DeviceLink
  * @typedef {import('../types/types').Network} Network
  * @typedef {import('../types/types').KnownNetwork} KnownNetwork
+ * @typedef {import('../types/types').WifiCredentials} WifiCredentials
  * */
 
 /** @type {() => Promise<string>} */
@@ -278,6 +279,57 @@ async function getActiveConnectionTypes() {
   } catch (err) {
     throw err;
   }
+}
+
+/**
+ * Get the ssid, security type and saved password of the active wifi connection.
+ * Returns undefined if no wifi connection is active.
+ * @type {() => Promise<WifiCredentials | undefined>}
+ */
+export async function getActiveWifiCredentials() {
+  const iface = await getWifiInterface();
+  const uuid = await runCommand([
+    "nmcli",
+    "-g",
+    "GENERAL.CON-UUID",
+    "device",
+    "show",
+    iface,
+  ]);
+  if (!uuid) {
+    return;
+  }
+
+  // Query fields individually so values are returned unescaped
+  /** @type {(field: string) => Promise<string>} */
+  const getField = (field) =>
+    runCommand(["nmcli", "-s", "-g", field, "connection", "show", "uuid", uuid]);
+
+  const [type, ssid, hidden, keyMgmt] = await Promise.all([
+    getField("connection.type"),
+    getField("802-11-wireless.ssid"),
+    getField("802-11-wireless.hidden"),
+    getField("802-11-wireless-security.key-mgmt"),
+  ]);
+  if (type !== "802-11-wireless") {
+    return;
+  }
+
+  let password = "";
+  if (keyMgmt === "none") {
+    // WEP
+    const keyIndex = (await getField("802-11-wireless-security.wep-tx-keyidx")) || "0";
+    password = await getField(`802-11-wireless-security.wep-key${keyIndex}`);
+  } else if (keyMgmt) {
+    password = await getField("802-11-wireless-security.psk");
+  }
+
+  return {
+    ssid,
+    keyMgmt,
+    password,
+    hidden: hidden === "yes",
+  };
 }
 
 // connect functions

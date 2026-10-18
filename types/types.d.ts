@@ -41,6 +41,13 @@ export type NetworkLists = {
   knownNetworks: NetworkDisplay[];
 };
 
+export type WifiCredentials = {
+  ssid: string;
+  keyMgmt: string;
+  password: string;
+  hidden: boolean;
+};
+
 export type ListTableDataItem = {
   [key: string]: string;
 };
