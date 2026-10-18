@@ -18,6 +18,7 @@ import {
 import { togglePower } from "./modules/device";
 import { connectWifi } from "./modules/wifi-dialog";
 import { showWifiQr } from "./modules/qr-dialog";
+import { connectEnterpriseWifi } from "./modules/enterprise-dialog";
 import { registerNavigation, saveRowPositions } from "./navigation";
 import { messageUi } from "./ui/message";
 import { startLoader } from "./ui/loading";
@@ -104,19 +105,20 @@ export async function initialize() {
       screen.children.forEach((element) => {
         element.hide();
       });
-      connectWifi(
-        screen,
-        ssid,
-        security,
-        /** @type {(submitted: boolean) => void} */ (submitted) => {
-          screen.children.forEach((element) => {
-            element.show();
-            reloadUiData(false, !submitted);
-            renderedNetworksUi.focus();
-            screen.render();
-          });
-        },
-      );
+      /** @type {(submitted: boolean) => void} */
+      const onDialogClose = (submitted) => {
+        screen.children.forEach((element) => {
+          element.show();
+        });
+        reloadUiData(false, !submitted);
+        renderedNetworksUi.focus();
+        screen.render();
+      };
+      if (security.includes("802.1X")) {
+        connectEnterpriseWifi(screen, ssid, onDialogClose);
+      } else {
+        connectWifi(screen, ssid, security, onDialogClose);
+      }
     },
   });
 
@@ -146,13 +148,13 @@ export async function initialize() {
       screen,
       "",
       "unknown",
-      /** @type {(submitted: boolean) => void} */ (submitted) => {
+      /** @type {(submitted: boolean) => void} */       (submitted) => {
         screen.children.forEach((element) => {
           element.show();
-          reloadUiData(false, !submitted);
-          renderedNetworksUi.focus();
-          screen.render();
         });
+        reloadUiData(false, !submitted);
+        renderedNetworksUi.focus();
+        screen.render();
       },
     );
   });

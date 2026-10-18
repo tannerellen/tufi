@@ -5,6 +5,7 @@
  * @typedef {import('../types/types').Network} Network
  * @typedef {import('../types/types').KnownNetwork} KnownNetwork
  * @typedef {import('../types/types').WifiCredentials} WifiCredentials
+ * @typedef {import('../types/types').EnterpriseOptions} EnterpriseOptions
  * */
 
 /** @type {() => Promise<string>} */
@@ -366,6 +367,69 @@ export async function connectToNetwork(ssid, password, hidden) {
 }
 
 /**
+ * Create and activate a WPA/WPA2/WPA3 Enterprise (802.1X) connection profile.
+ * The profile is removed again if activation fails.
+ * @type {(options: EnterpriseOptions) => Promise<string>}
+ */
+export async function connectToEnterpriseNetwork({
+  ssid,
+  eap,
+  phase2Auth,
+  identity,
+  password,
+  anonymousIdentity,
+  domain,
+}) {
+  const cmd = [
+    "nmcli",
+    "connection",
+    "add",
+    "type",
+    "wifi",
+    "con-name",
+    ssid,
+    "ssid",
+    ssid,
+    "wifi-sec.key-mgmt",
+    "wpa-eap",
+    "802-1x.eap",
+    eap,
+    "802-1x.phase2-auth",
+    phase2Auth,
+    "802-1x.identity",
+    identity,
+    "802-1x.password",
+    password,
+  ];
+  if (anonymousIdentity) {
+    cmd.push("802-1x.anonymous-identity", anonymousIdentity);
+  }
+  if (domain) {
+    // Validate the server certificate against system CAs and the expected domain
+    cmd.push("802-1x.system-ca-certs", "yes");
+    cmd.push("802-1x.domain-suffix-match", domain);
+  }
+
+  const output = await runCommand(cmd);
+  // Output: Connection '<name>' (<uuid>) successfully added.
+  const uuid = output.match(/\(([0-9a-f-]{36})\)/i)?.[1];
+  if (!uuid) {
+    throw new Error("Unable to create connection profile");
+  }
+
+  try {
+    return await runCommand(["nmcli", "connection", "up", "uuid", uuid]);
+  } catch (err) {
+    try {
+      await runCommand(["nmcli", "connection", "delete", "uuid", uuid]);
+    } catch (cleanupErr) {
+      // Ignore cleanup errors so the original connection error is reported
+    }
+    throw err;
+  }
+}
+
+/**
  * Activate an existing saved connection profile
  * @type {(name: string) => Promise<string>}
  */
@@ -545,9 +609,13 @@ async function runCommand(command) {
 
 /** @type {(errorMessage: string) => string} */
 function commandErrorToString(errorMessage) {
-  if (errorMessage.includes("Error: ")) {
-    return errorMessage.split("Error: ")[1].trim();
-  } else {
-    return errorMessage.trim();
-  }
+  const message = errorMessage.includes("Error: ")
+    ? errorMessage.split("Error: ")[1]
+    : errorMessage;
+  // Drop nmcli "Hint: use journalctl ..." lines, they don't fit in the ui
+  return message
+    .split("\n")
+    .filter((line) => !line.trim().startsWith("Hint:"))
+    .join("\n")
+    .trim();
 }

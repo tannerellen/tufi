@@ -32,6 +32,7 @@ export type BlessedElement = {
   key: (keys: string[], callback: (ch: string, key: string) => void) => void;
   items: BlessedElement[];
   content?: string;
+  value?: string;
   top: number | string;
   right: number | string;
   bottom: number | string;

@@ -48,6 +48,16 @@ export type WifiCredentials = {
   hidden: boolean;
 };
 
+export type EnterpriseOptions = {
+  ssid: string;
+  eap: "peap" | "ttls";
+  phase2Auth: "mschapv2" | "gtc" | "pap";
+  identity: string;
+  password: string;
+  anonymousIdentity?: string;
+  domain?: string;
+};
+
 export type ListTableDataItem = {
   [key: string]: string;
 };

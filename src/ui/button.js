@@ -10,7 +10,8 @@ const blessed = /** @type{any} */ (reblessed);
 /** @type {(container: BlessedElement, options: {[key: string]: any}) => BlessedElement} */
 export function buttonUi(container, options) {
   const color = options?.color ?? "green";
-  const button = blessed.button({
+  /** @type {{[key: string]: any}} */
+  const buttonConfig = {
     parent: container,
     name: options?.name ?? "",
     content: options?.content ?? "",
@@ -29,6 +30,11 @@ export function buttonUi(container, options) {
       },
     },
     mouse: true,
-  });
+  };
+  if (options?.left !== undefined) {
+    buttonConfig.left = options.left;
+    delete buttonConfig.right;
+  }
+  const button = blessed.button(buttonConfig);
   return button;
 }
