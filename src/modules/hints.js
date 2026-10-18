@@ -14,6 +14,7 @@ const helpTextLines = [
   "",
   "{bold}General{/bold}",
   "s: scan | h: hidden | o: device on/off | w: share (QR)",
+  "b: open sign-in page (captive portal)",
   "",
   "{bold}New Network{/bold}",
   "space or ↵: connect",

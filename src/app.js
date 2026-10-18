@@ -8,6 +8,7 @@ import {
   registerConnectionUi,
   checkActiveConnection,
   removeActiveConnection,
+  openPortalLogin,
 } from "./modules/connection";
 import {
   registerNetworkUi,
@@ -192,6 +193,25 @@ export async function initialize() {
 
   screen.key(["s"], async function (ch, key) {
     await scan(500);
+  });
+
+  // Open the captive portal login page in a browser
+  screen.key(["b"], function (ch, key) {
+    if (!openPortalLogin()) {
+      const message = messageUi(screen, {
+        top: /** @type {number} */ (screen.height) - 1,
+        left: 0,
+        right: 0,
+        height: "shrink",
+        content: "Not connected to a wifi network",
+        color: "red",
+      });
+      screen.render();
+      setTimeout(() => {
+        message.destroy();
+        screen.render();
+      }, 3000);
+    }
   });
 
   // Show QR code to share the active wifi network

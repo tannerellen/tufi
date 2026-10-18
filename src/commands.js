@@ -6,6 +6,7 @@
  * @typedef {import('../types/types').KnownNetwork} KnownNetwork
  * @typedef {import('../types/types').WifiCredentials} WifiCredentials
  * @typedef {import('../types/types').EnterpriseOptions} EnterpriseOptions
+ * @typedef {import('../types/types').Connectivity} Connectivity
  * */
 
 /** @type {() => Promise<string>} */
@@ -479,6 +480,51 @@ export async function disconnectFromNetwork(ssid) {
   } catch (err) {
     return; // Don't throw on error because it may not delete if connection doesn't exist
   }
+}
+
+/** @type {Connectivity[]} */
+const CONNECTIVITY_STATES = ["unknown", "none", "portal", "limited", "full"];
+
+/**
+ * Get the internet connectivity of the wifi device as determined by
+ * NetworkManager's connectivity check. "unknown" if checking is disabled.
+ * @type {(recheck?: boolean) => Promise<Connectivity>}
+ */
+export async function getConnectivity(recheck) {
+  if (recheck) {
+    // Ask NetworkManager to re-run its connectivity check now
+    await runCommand(["nmcli", "networking", "connectivity", "check"]);
+  }
+  const iface = await getWifiInterface();
+  const output = await runCommand([
+    "nmcli",
+    "-e",
+    "no",
+    "-g",
+    "GENERAL.IP4-CONNECTIVITY,GENERAL.IP6-CONNECTIVITY",
+    "device",
+    "show",
+    iface,
+  ]);
+  // Lines look like "4 (full)", use the best of ipv4 and ipv6
+  const best = Math.max(
+    0,
+    ...output.split("\n").map((line) => parseInt(line, 10) || 0),
+  );
+  return CONNECTIVITY_STATES[best] ?? "unknown";
+}
+
+/**
+ * Open a url in the default browser without waiting for it to close
+ * @type {(url: string) => void}
+ */
+export function openUrl(url) {
+  const proc = Bun.spawn(["xdg-open", url], {
+    stdin: "ignore",
+    stdout: "ignore",
+    stderr: "ignore",
+  });
+  proc.unref();
 }
 
 /** @type {() => Promise<boolean>} */

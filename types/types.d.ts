@@ -48,6 +48,8 @@ export type WifiCredentials = {
   hidden: boolean;
 };
 
+export type Connectivity = "unknown" | "none" | "portal" | "limited" | "full";
+
 export type EnterpriseOptions = {
   ssid: string;
   eap: "peap" | "ttls";
