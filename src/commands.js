@@ -20,8 +20,9 @@ export async function getWifiInterface() {
     ]);
     const interfaceLines = iface.split("\n");
     for (const line of interfaceLines) {
-      if (line.includes(":wifi")) {
-        return line.split(":")[0];
+      const [device, type] = parseTerseLine(line);
+      if (type === "wifi") {
+        return device;
       }
     }
     return "wlan0";
@@ -73,10 +74,11 @@ export async function getDeviceLink() {
 
   const deviceLink =
     /** @type {{ssid: string, frequency: number, bitrate: string, rate: number, channelWidth: string, band: string, channel: number}} */ (
-      processCommandOutput(link, dictionary, ": ")
+      processCommandOutput(link, dictionary, ": ", true)
     );
   // Fix rate value
   if (Object.keys(deviceLink).length) {
+    deviceLink.ssid = decodeIwSsid(deviceLink.ssid ?? "");
     const [rate, measure, width] = deviceLink.bitrate.split(" ");
     deviceLink.rate = parseFloat(rate) || 0;
     deviceLink.channelWidth = width?.replace("M", " M") || "";
@@ -142,8 +144,9 @@ export async function getConnections() {
       if (!line) {
         continue;
       }
-      const parts = line.split(".")[1].split(":");
-      const [property, value] = parts;
+      // Lines look like AP[1].SSID:value
+      const [key, value] = parseTerseLine(line);
+      const property = key.slice(key.indexOf(".") + 1);
       if (!fieldMap.has(property)) {
         continue;
       }
@@ -189,8 +192,8 @@ export async function getStationInfo() {
       const stationLines = station.split("\n");
 
       for (const line of stationLines) {
-        if (line.includes("yes:") || line.startsWith("*:")) {
-          const parts = line.split(":");
+        const parts = parseTerseLine(line);
+        if (parts[0] === "yes" || parts[0] === "*") {
           if (parts.length >= 4) {
             stationInfo.frequency = parts[2] || "-";
             stationInfo.security = parts[3] || "-";
@@ -227,7 +230,7 @@ export async function getWifiList(rescan) {
 
     return /** @type {Network[]} */ (
       arrayFromList(wifiList, (line) => {
-        return objectFromString(line, ":", [
+        return objectFromTerseLine(line, [
           { name: "ssid", type: "string" },
           { name: "security", type: "string" },
           { name: "signal", type: "number" },
@@ -253,7 +256,7 @@ export async function getKnownNetworks() {
     ]);
     return /** @type {KnownNetwork[]} */ (
       arrayFromList(networks, (network) => {
-        return objectFromString(network, ":", [
+        return objectFromTerseLine(network, [
           { name: "ssid", type: "string" },
           { name: "type", type: "string" },
         ]);
@@ -276,7 +279,10 @@ async function getActiveConnectionTypes() {
       "show",
       "--active",
     ]);
-    return connection.trim().split("\n");
+    return connection
+      .trim()
+      .split("\n")
+      .map((line) => parseTerseLine(line)[0]);
   } catch (err) {
     throw err;
   }
@@ -301,10 +307,21 @@ export async function getActiveWifiCredentials() {
     return;
   }
 
-  // Query fields individually so values are returned unescaped
+  // Query fields individually with escaping disabled so values are returned as is
   /** @type {(field: string) => Promise<string>} */
   const getField = (field) =>
-    runCommand(["nmcli", "-s", "-g", field, "connection", "show", "uuid", uuid]);
+    runCommand([
+      "nmcli",
+      "-e",
+      "no",
+      "-s",
+      "-g",
+      field,
+      "connection",
+      "show",
+      "uuid",
+      uuid,
+    ]);
 
   const [type, ssid, hidden, keyMgmt] = await Promise.all([
     getField("connection.type"),
@@ -446,7 +463,7 @@ async function getConnectionUuids() {
 /** @type {(ssid: string) => Promise<void>} */
 export async function deleteNetworkConnection(ssid) {
   try {
-    await runCommand(["nmcli", "connection", "delete", ssid]);
+    await runCommand(["nmcli", "connection", "delete", "id", ssid]);
     return;
   } catch (err) {
     throw err;
@@ -488,10 +505,58 @@ function stringToType(value, type) {
   }
 }
 
+/**
+ * Split a line of nmcli terse (-t / -g) output into fields.
+ * nmcli escapes ":" as "\:" and "\" as "\\" inside values, so a plain
+ * split(":") breaks on values like ssids that contain a colon.
+ * @type {(line: string) => string[]}
+ */
+export function parseTerseLine(line) {
+  /** @type {string[]} */
+  const fields = [];
+  let current = "";
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === "\\" && i + 1 < line.length) {
+      current += line[++i];
+    } else if (ch === ":") {
+      fields.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  fields.push(current);
+  return fields;
+}
+
+/**
+ * Decode an ssid printed by `iw`, which escapes "\", leading/trailing spaces
+ * and any non printable byte (including UTF-8 multibyte chars) as \xNN
+ * @type {(ssid: string) => string}
+ */
+export function decodeIwSsid(ssid) {
+  if (!ssid.includes("\\x")) {
+    return ssid;
+  }
+  /** @type {number[]} */
+  const bytes = [];
+  for (let i = 0; i < ssid.length; i++) {
+    const hex = ssid.slice(i + 2, i + 4);
+    if (ssid[i] === "\\" && ssid[i + 1] === "x" && /^[0-9a-f]{2}$/i.test(hex)) {
+      bytes.push(parseInt(hex, 16));
+      i += 3;
+    } else {
+      bytes.push(...new TextEncoder().encode(ssid[i]));
+    }
+  }
+  return new TextDecoder().decode(new Uint8Array(bytes));
+}
+
 /** @typedef {{name: string, type: 'string' | 'number' | 'boolean'}} Label */
-/** @type {(input: string, separator: string, labels: Label[]) => {[key: string]: string | number | boolean}} */
-function objectFromString(input, separator, labels) {
-  const inputParts = input.split(separator);
+/** @type {(input: string, labels: Label[]) => {[key: string]: string | number | boolean}} */
+function objectFromTerseLine(input, labels) {
+  const inputParts = parseTerseLine(input);
   /** @type {{[key: string]: string | number | boolean}} */
   const output = {};
   for (let i = 0; i < labels.length; i++) {
@@ -562,14 +627,33 @@ function getBand(frequency) {
   return "Unknown";
 }
 
-/** @type {(commandOutput: string, fieldMap: FieldMap, fieldSeperator: string) => {[key: string]: string | number | boolean}} */
-function processCommandOutput(commandOutput, fieldMap, fieldSeperator) {
+/**
+ * @type {(commandOutput: string, fieldMap: FieldMap, fieldSeperator: string, splitOnce?: boolean) => {[key: string]: string | number | boolean}}
+ * splitOnce: only split on the first separator so values may contain it (e.g. ssids)
+ */
+function processCommandOutput(
+  commandOutput,
+  fieldMap,
+  fieldSeperator,
+  splitOnce,
+) {
   /** @type {{[key: string]: string | number | boolean}} */
   const result = {};
   const lines = commandOutput.trim().split("\n");
   for (const line of lines) {
-    const parts = line.trim().split(fieldSeperator);
-    const [property, value] = parts;
+    let property;
+    let value;
+    if (splitOnce) {
+      const trimmed = line.trimStart();
+      const index = trimmed.indexOf(fieldSeperator);
+      if (index === -1) {
+        continue;
+      }
+      property = trimmed.slice(0, index);
+      value = trimmed.slice(index + fieldSeperator.length);
+    } else {
+      [property, value] = line.trim().split(fieldSeperator);
+    }
 
     if (!fieldMap.has(property)) {
       continue;
