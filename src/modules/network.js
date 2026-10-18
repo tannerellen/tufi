@@ -3,7 +3,7 @@ import {
   getWifiList,
   getKnownNetworks,
   deleteNetworkConnection,
-  connectToNetwork,
+  activateConnection,
   disconnectFromNetwork,
 } from "../commands";
 
@@ -97,13 +97,38 @@ export async function toggleWifiConnection(ssid, connected) {
     loader: true,
   });
   screen.render();
-  if (connected) {
-    await disconnectFromNetwork(ssid);
-  } else {
-    await connectToNetwork(ssid);
+  try {
+    if (connected) {
+      await disconnectFromNetwork(ssid);
+    } else {
+      // Known networks have a saved profile, activate it rather than creating a new one
+      await activateConnection(ssid);
+    }
+  } catch (err) {
+    message.destroy();
+    showError(err instanceof Error ? err.message : String(err));
+    return;
   }
   message.destroy();
   screen.render();
+}
+
+/** @type {(content: string) => void} */
+function showError(content) {
+  const screen = getScreen();
+  const errorMessage = messageUi(screen, {
+    top: /** @type {number} */ (screen.height) - 1,
+    left: 0,
+    right: 0,
+    height: "shrink",
+    content,
+    color: "red",
+  });
+  screen.render();
+  setTimeout(() => {
+    errorMessage.destroy();
+    screen.render();
+  }, 4000);
 }
 
 /** @type {() => NetworkLists} */

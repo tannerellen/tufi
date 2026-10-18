@@ -344,13 +344,39 @@ export async function connectToNetwork(ssid, password, hidden) {
     cmd.push("hidden");
     cmd.push("yes");
   }
+  // Snapshot existing profiles so a failed attempt only cleans up what it created
+  const existingUuids = new Set(await getConnectionUuids());
   try {
     return await runCommand(cmd);
   } catch (err) {
-    // If connection fails then remove connection
-    await deleteNetworkConnection(ssid);
+    // If connection fails then remove any profile created by this attempt.
+    // Never touch profiles that existed before (saved networks).
+    try {
+      const newUuids = (await getConnectionUuids()).filter(
+        (uuid) => !existingUuids.has(uuid),
+      );
+      for (const uuid of newUuids) {
+        await runCommand(["nmcli", "connection", "delete", "uuid", uuid]);
+      }
+    } catch (cleanupErr) {
+      // Ignore cleanup errors so the original connection error is reported
+    }
     throw err;
   }
+}
+
+/**
+ * Activate an existing saved connection profile
+ * @type {(name: string) => Promise<string>}
+ */
+export async function activateConnection(name) {
+  return await runCommand(["nmcli", "connection", "up", "id", name]);
+}
+
+/** @type {() => Promise<string[]>} */
+async function getConnectionUuids() {
+  const output = await runCommand(["nmcli", "-g", "UUID", "connection", "show"]);
+  return output ? output.split("\n") : [];
 }
 
 /** @type {(ssid: string) => Promise<void>} */
